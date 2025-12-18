@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class Main {
@@ -31,6 +32,7 @@ public class Main {
                         case "PASSWORD":
                             PASSWORD = parts[1].trim();
                             break;
+                        
                     }
                 }
             }
@@ -59,6 +61,8 @@ public class Main {
                 System.out.println("2) Artikel löschen");
                 System.out.println("3) Bestellung anlegen");
                 System.out.println("4) Bestellung löschen");
+                System.out.println("5) Kunde hinzufügen");
+                System.out.println("6) Artikel hinzufügen");
                 System.out.println("0) Beenden");
                 System.out.print("Auswahl: ");
 
@@ -100,7 +104,28 @@ public class Main {
                             Bestellung.remove(con, bid);
                             System.out.println("Bestellung gelöscht.");
                             break;
-
+                        case 5:
+                           
+                            
+                            System.out.print("name: ");
+                            String name = sc.nextLine();
+                            
+                            System.out.print("email: ");
+                            String email= sc.nextLine();
+                            Kunde.add(con,  name, email);
+                            System.out.println("Bestellung erfolgreich gespeichert.");
+                            break;
+                            case 6:
+                            System.out.print("Artikel name: ");
+                            String aName = sc.nextLine();
+                            
+                            System.out.print("preis: ");
+                            Double preis= Double.parseDouble(sc.nextLine());
+                            Artikel.add(con,  aName, preis);
+                           
+                            break;
+                        
+                        
                         case 0:
                             running = false;
                             System.out.println("Programm beendet.");

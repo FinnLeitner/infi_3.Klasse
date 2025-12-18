@@ -18,7 +18,17 @@ public class Kunde {
             System.out.println("Fehler beim Erstellen der Kunden-Tabelle.");
         }
     }
-
+public static void add(Connection con, String name, String email){
+        String sql="Insert Into KUNDEN (name,email)Values (?,?)";
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+       
+        ps.setString(1,name);
+        ps.setString(2,email);
+        ps.executeUpdate();
+    } catch (SQLException e) {
+        System.out.println("Kunde konnte nicht hinzugefügt werden.");
+    }
+}
     public static void remove(Connection con, int kundenId) {
         String sql = "DELETE FROM KUNDEN WHERE id = ?";
 

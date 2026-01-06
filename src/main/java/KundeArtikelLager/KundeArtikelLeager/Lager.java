@@ -4,47 +4,56 @@ import java.sql.*;
 
 public class Lager {
 
-    public static void init(Connection con) {
-        String sql =
-                "CREATE TABLE IF NOT EXISTS LAGER (" +
-                "artikel_id INTEGER PRIMARY KEY, " +
-                "bestand INTEGER NOT NULL, " +
-                "FOREIGN KEY (artikel_id) REFERENCES ARTIKEL(id) " +
-                "ON DELETE RESTRICT" +
-                ")";
+public static void init(Connection con) throws SQLException {
+    
+    String sql = """
+            CREATE TABLE IF NOT EXISTS lager (
+                artikel_id INT PRIMARY KEY,
+                bestand INT NOT NULL,
+                FOREIGN KEY (artikel_id) REFERENCES artikel(id)
+            )
+        """;
+    con.createStatement().execute(sql);
+    
+    // Alle fehlenden Lager-Einträge automatisch anlegen
+    String fix = """
+            INSERT INTO lager (artikel_id, bestand)
+            SELECT id, 100 FROM artikel
+            WHERE id NOT IN (SELECT artikel_id FROM lager)
+        """;
+    con.createStatement().executeUpdate(fix);
+}
 
-        try (Statement st = con.createStatement()) {
-            st.execute(sql);
-        } catch (SQLException e) {
-            System.out.println("Fehler beim Erstellen der Lager-Tabelle.");
-        }
-    }
+public static void create(Connection con, int artikelId, int bestand)
+        throws SQLException {
+    
+    String sql =
+            "INSERT IGNORE INTO lager (artikel_id, bestand) VALUES (?, ?)";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, artikelId);
+    ps.setInt(2, bestand);
+    ps.executeUpdate();
+}
 
-    public static boolean genug(Connection con, int artikelId, int menge) {
-        String sql = "SELECT bestand FROM LAGER WHERE artikel_id = ?";
+public static boolean genug(Connection con, int artikelId, int menge)
+        throws SQLException {
+    
+    String sql = "SELECT bestand FROM lager WHERE artikel_id = ?";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, artikelId);
+    ResultSet rs = ps.executeQuery();
+    
+    return rs.next() && rs.getInt("bestand") >= menge;
+}
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, artikelId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getInt("bestand") >= menge;
-            }
-        } catch (SQLException e) {
-            System.out.println("Fehler bei der Lagerprüfung.");
-        }
-        return false;
-    }
-
-    public static void abbuchen(Connection con, int artikelId, int menge) {
-        String sql = "UPDATE LAGER SET bestand = bestand - ? WHERE artikel_id = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, menge);
-            ps.setInt(2, artikelId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Bestand konnte nicht reduziert werden.");
-        }
-    }
+public static void abbuchen(Connection con, int artikelId, int menge)
+        throws SQLException {
+    
+    String sql =
+            "UPDATE lager SET bestand = bestand - ? WHERE artikel_id = ?";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, menge);
+    ps.setInt(2, artikelId);
+    ps.executeUpdate();
+}
 }

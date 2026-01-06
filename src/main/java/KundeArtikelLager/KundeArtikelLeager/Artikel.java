@@ -1,45 +1,45 @@
 package KundeArtikelLager.KundeArtikelLeager;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 
 public class Artikel {
 
-    public static void init(Connection con) {
-        String sql =
-                "CREATE TABLE IF NOT EXISTS ARTIKEL (" +
-                "id INTEGER PRIMARY KEY AUTO_INCREMENT, " +
-                "name VARCHAR(100) NOT NULL, " +
-                "preis DECIMAL(10,2) NOT NULL,"+
-                "datumuhrzeit DATETIME NOT NULL"+
-                ")";
+public static void init(Connection con) throws SQLException {
+    String sql = """
+            CREATE TABLE IF NOT EXISTS artikel (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100),
+                preis DECIMAL(10,2),
+                datumuhrzeit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """;
+    con.createStatement().execute(sql);
+}
 
-        try (Statement st = con.createStatement()) {
-            st.execute(sql);
-        } catch (SQLException e) {
-            System.out.println("Fehler beim Erstellen der Artikel-Tabelle.");
-        }
+public static void add(Connection con, String name, double preis)
+        throws SQLException {
+    
+    String sql = "INSERT INTO artikel (name, preis) VALUES (?, ?)";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setString(1, name);
+    ps.setDouble(2, preis);
+    ps.executeUpdate();
+    
+    // Lager-Eintrag automatisch anlegen
+    ResultSet rs = con.createStatement()
+            .executeQuery("SELECT LAST_INSERT_ID()");
+    if (rs.next()) {
+        int artikelId = rs.getInt(1);
+        Lager.create(con, artikelId, 100); // fixer Lagerbestand
     }
-public static void add(Connection con, String name, Double preis){
-    String sql="Insert Into ARTIKEL (name,preis, datumuhrzeit)Values (?,?,?)";
-    try (PreparedStatement ps = con.prepareStatement(sql)) {
-        LocalDateTime now = LocalDateTime.now().withNano(0);
-        ps.setString(1,name);
-        ps.setDouble(2,preis);
-        ps.setObject(3,now);
-        ps.executeUpdate();
-    } catch (SQLException e) {
-        System.out.println("Artikel konnte nicht hinzugefügt werden."+e.getMessage());
-        }
-    }
-    public static void remove(Connection con, int artikelId) {
-        String sql = "DELETE FROM ARTIKEL WHERE id = ?";
+}
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, artikelId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Artikel konnte nicht gelöscht werden.");
-        }
-    }
+public static void remove(Connection con, int id)
+        throws SQLException {
+    
+    String sql = "DELETE FROM artikel WHERE id = ?";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, id);
+    ps.executeUpdate();
+}
 }

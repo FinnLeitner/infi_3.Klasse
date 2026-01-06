@@ -4,55 +4,56 @@ import java.sql.*;
 
 public class Bestellung {
 
-    public static void init(Connection con) {
-        String sql =
-                "CREATE TABLE IF NOT EXISTS BESTELLUNG (" +
-                "id INTEGER PRIMARY KEY AUTO_INCREMENT, " +
-                "kunden_id INTEGER NOT NULL, " +
-                "artikel_id INTEGER NOT NULL, " +
-                "menge INTEGER NOT NULL, " +
-                "FOREIGN KEY (kunden_id) REFERENCES KUNDEN(id) ON DELETE RESTRICT, " +
-                "FOREIGN KEY (artikel_id) REFERENCES ARTIKEL(id) ON DELETE RESTRICT" +
-                ")";
+public static void init(Connection con) throws SQLException {
+    String sql = """
+    CREATE TABLE IF NOT EXISTS bestellung (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        kunde_id INT,
+        artikel_id INT,
+        menge INT,
+        datum TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (kunde_id) REFERENCES kunden(id),
+        FOREIGN KEY (artikel_id) REFERENCES artikel(id)
+    )
+""";
+    
+    con.createStatement().execute(sql);
+}
 
-        try (Statement st = con.createStatement()) {
-            st.execute(sql);
-        } catch (SQLException e) {
-            System.out.println("Fehler beim Erstellen der Bestellung-Tabelle.");
-        }
+public static boolean create(Connection con,
+                             int kundeId,
+                             int artikelId,
+                             int menge) throws SQLException {
+    
+    if (!Lager.genug(con, artikelId, menge)) {
+        System.out.println("❌ Nicht genug Lagerbestand!");
+        return false;
     }
+    
+    // Kein Datum nötig, DB setzt automatisch CURRENT_TIMESTAMP
+    String sql = """
+        INSERT INTO bestellung (kunde_id, artikel_id, menge)
+        VALUES (?, ?, ?)
+    """;
+    
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, kundeId);
+    ps.setInt(2, artikelId);
+    ps.setInt(3, menge);
+    ps.executeUpdate();
+    
+    Lager.abbuchen(con, artikelId, menge);
+    return true;
+}
 
-    public static void create(Connection con, int kundenId, int artikelId, int menge) {
 
-        if (!Lager.genug(con, artikelId, menge)) {
-            System.out.println("Nicht genügend Lagerbestand.");
-            return;
-        }
 
-        String sql =
-                "INSERT INTO BESTELLUNG (kunden_id, artikel_id, menge) " +
-                "VALUES (?, ?, ?)";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, kundenId);
-            ps.setInt(2, artikelId);
-            ps.setInt(3, menge);
-            ps.executeUpdate();
-
-            Lager.abbuchen(con, artikelId, menge);
-        } catch (SQLException e) {
-            System.out.println("Bestellung konnte nicht gespeichert werden.");
-        }
-    }
-
-    public static void remove(Connection con, int bestellId) {
-        String sql = "DELETE FROM BESTELLUNG WHERE id = ?";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, bestellId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Bestellung konnte nicht gelöscht werden.");
-        }
-    }
+public static void remove(Connection con, int id)
+        throws SQLException {
+    
+    String sql = "DELETE FROM bestellung WHERE id = ?";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, id);
+    ps.executeUpdate();
+}
 }

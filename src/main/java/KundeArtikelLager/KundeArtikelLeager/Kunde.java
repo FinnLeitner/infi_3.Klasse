@@ -4,39 +4,33 @@ import java.sql.*;
 
 public class Kunde {
 
-    public static void init(Connection con) {
-        String sql =
-                "CREATE TABLE IF NOT EXISTS KUNDEN (" +
-                "id INTEGER PRIMARY KEY AUTO_INCREMENT, " +
-                "name VARCHAR(80) NOT NULL, " +
-                "email VARCHAR(120)" +
-                ")";
-
-        try (Statement st = con.createStatement()) {
-            st.execute(sql);
-        } catch (SQLException e) {
-            System.out.println("Fehler beim Erstellen der Kunden-Tabelle.");
-        }
-    }
-public static void add(Connection con, String name, String email){
-        String sql="Insert Into KUNDEN (name,email)Values (?,?)";
-    try (PreparedStatement ps = con.prepareStatement(sql)) {
-       
-        ps.setString(1,name);
-        ps.setString(2,email);
-        ps.executeUpdate();
-    } catch (SQLException e) {
-        System.out.println("Kunde konnte nicht hinzugefügt werden.");
-    }
+public static void init(Connection con) throws SQLException {
+    String sql = """
+            CREATE TABLE IF NOT EXISTS kunden (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(100),
+                email VARCHAR(100)
+            )
+        """;
+    con.createStatement().execute(sql);
 }
-    public static void remove(Connection con, int kundenId) {
-        String sql = "DELETE FROM KUNDEN WHERE id = ?";
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, kundenId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Kunde konnte nicht gelöscht werden.");
-        }
-    }
+public static void add(Connection con, String name, String email)
+        throws SQLException {
+    
+    String sql = "INSERT INTO kunden (name, email) VALUES (?, ?)";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setString(1, name);
+    ps.setString(2, email);
+    ps.executeUpdate();
+}
+
+public static void remove(Connection con, int id)
+        throws SQLException {
+    
+    String sql = "DELETE FROM kunden WHERE id = ?";
+    PreparedStatement ps = con.prepareStatement(sql);
+    ps.setInt(1, id);
+    ps.executeUpdate();
+}
 }

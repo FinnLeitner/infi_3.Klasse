@@ -31,6 +31,7 @@ private static void loadDatabaseConfig() {
 }
 
 public static void main(String[] args) {
+    
     loadDatabaseConfig();
     
     try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -40,6 +41,9 @@ public static void main(String[] args) {
         Artikel.init(con);
         Lager.init(con);
         Bestellung.init(con);
+        
+
+        JSONReadFromTheFileTest.jsonImport(con);
         
         boolean running = true;
         
@@ -60,40 +64,23 @@ public static void main(String[] args) {
                 switch (choice) {
                     case 1 -> {
                         System.out.print("Kunden-ID: ");
-                        int kid = Integer.parseInt(sc.nextLine());
-                        Kunde.remove(con, kid);
-                        System.out.println("Kunde entfernt.");
+                        Kunde.remove(con, Integer.parseInt(sc.nextLine()));
                     }
                     case 2 -> {
                         System.out.print("Artikel-ID: ");
-                        int aid = Integer.parseInt(sc.nextLine());
-                        Artikel.remove(con, aid);
-                        System.out.println("Artikel entfernt.");
+                        Artikel.remove(con, Integer.parseInt(sc.nextLine()));
                     }
                     case 3 -> {
                         System.out.print("Kunden-ID: ");
                         int kundenId = Integer.parseInt(sc.nextLine());
-                        
                         System.out.print("Artikel-ID: ");
                         int artikelId = Integer.parseInt(sc.nextLine());
-                        
                         System.out.print("Menge: ");
                         int menge = Integer.parseInt(sc.nextLine());
                         
-                        try {
-                            boolean ok = Bestellung.create(con, kundenId, artikelId, menge);
-                            if (ok) {
-                                System.out.println("✅ Bestellung erfolgreich gespeichert.");
-                            }
-                        } catch (SQLException e) {
-                            e.printStackTrace();
+                        if (Bestellung.create(con, kundenId, artikelId, menge)) {
+                            System.out.println(" Bestellung gespeichert");
                         }
-                    }
-                    case 4 -> {
-                        System.out.print("Bestell-ID: ");
-                        int bid = Integer.parseInt(sc.nextLine());
-                        Bestellung.remove(con, bid);
-                        System.out.println("Bestellung gelöscht.");
                     }
                     case 5 -> {
                         System.out.print("Name: ");
@@ -101,25 +88,19 @@ public static void main(String[] args) {
                         System.out.print("Email: ");
                         String email = sc.nextLine();
                         Kunde.add(con, name, email);
-                        System.out.println("Kunde erfolgreich gespeichert.");
                     }
                     case 6 -> {
                         System.out.print("Artikelname: ");
-                        String aName = sc.nextLine();
+                        String name = sc.nextLine();
                         System.out.print("Preis: ");
                         double preis = Double.parseDouble(sc.nextLine());
-                        Artikel.add(con, aName, preis);
-                        System.out.println("Artikel erfolgreich gespeichert.");
+                        Artikel.add(con, name, preis);
                     }
-                    case 0 -> {
-                        running = false;
-                        System.out.println("Programm beendet.");
-                    }
-                    default -> System.out.println("Ungültige Auswahl.");
+                    case 0 -> running = false;
                 }
                 
             } catch (NumberFormatException e) {
-                System.out.println("Bitte eine gültige Zahl eingeben.");
+                System.out.println("Ungültige Eingabe.");
             }
         }
         
@@ -127,4 +108,5 @@ public static void main(String[] args) {
         e.printStackTrace();
     }
 }
+
 }

@@ -1,17 +1,23 @@
 package KundeArtikelLager.KundeArtikelLeager;
 
 import java.sql.*;
+import java.util.List;
+
+
 
 public class Artikel {
 
 public static void init(Connection con) throws SQLException {
     String sql = """
-            CREATE TABLE IF NOT EXISTS artikel (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(100),
-                preis DECIMAL(10,2),
-                datumuhrzeit TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+       
+           CREATE TABLE If not Exists artikel  (
+               id INT AUTO_INCREMENT PRIMARY KEY,
+               name VARCHAR(100) NOT NULL,
+               preis DOUBLE NOT NULL,
+               UNIQUE (name)
+           );
+           
+           
         """;
     con.createStatement().execute(sql);
 }
@@ -25,7 +31,7 @@ public static void add(Connection con, String name, double preis)
     ps.setDouble(2, preis);
     ps.executeUpdate();
     
-    // Lager-Eintrag automatisch anlegen
+   
     ResultSet rs = con.createStatement()
             .executeQuery("SELECT LAST_INSERT_ID()");
     if (rs.next()) {
@@ -33,6 +39,8 @@ public static void add(Connection con, String name, double preis)
         Lager.create(con, artikelId, 100); // fixer Lagerbestand
     }
 }
+
+
 
 public static void remove(Connection con, int id)
         throws SQLException {

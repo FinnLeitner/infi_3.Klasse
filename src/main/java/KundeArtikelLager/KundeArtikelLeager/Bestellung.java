@@ -26,7 +26,7 @@ public static boolean create(Connection con,
                              int menge) throws SQLException {
     
     if (!Lager.genug(con, artikelId, menge)) {
-        System.out.println("❌ Nicht genug Lagerbestand!");
+        System.out.println(" Nicht genug Lagerbestand!");
         return false;
     }
     

@@ -17,7 +17,6 @@ public static void init(Connection con) throws SQLException {
 
 public static void add(Connection con, String name, String email)
         throws SQLException {
-    
     String sql = "INSERT INTO kunden (name, email) VALUES (?, ?)";
     PreparedStatement ps = con.prepareStatement(sql);
     ps.setString(1, name);

@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Messer",
+    "preis": 20.2
+  },
+  {
+    "name": "Fernseher",
+    "preis": 300
+  },
+  {
+    "name": "Laptop",
+    "preis": 999.99
+  }
+]

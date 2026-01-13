@@ -103,10 +103,13 @@ public static void main(String[] args) {
                 System.out.println("Ungültige Eingabe.");
             }
         }
-        
+        WriteToJSON.writeToFile(con);
     } catch (SQLException e) {
         e.printStackTrace();
+    } catch (IOException e) {
+	    throw new RuntimeException(e);
     }
+	
 }
 
 }

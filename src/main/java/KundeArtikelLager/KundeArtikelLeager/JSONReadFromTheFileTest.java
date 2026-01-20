@@ -19,9 +19,7 @@ public static void jsonImport(Connection con) {
 	String sql = "INSERT IGNORE INTO artikel (name, preis) VALUES (?, ?)";
 	
 	try {
-		JSONArray jsonArray = (JSONArray) parser.parse(
-				new FileReader("ArtikelJSON.json")
-		);
+		JSONArray jsonArray = (JSONArray) parser.parse(new FileReader("ArtikelJSON.json"));
 		
 		PreparedStatement ps = con.prepareStatement(sql);
 		

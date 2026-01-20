@@ -6,6 +6,7 @@ import java.sql.*;
 
 import org.json.simple.JSONObject;
 public class WriteToJSON {
+
 public static void writeToFile(Connection con) throws IOException, SQLException {
 	//Creating a JSONObject object
 	JSONObject jsonObject = new JSONObject();
@@ -13,16 +14,15 @@ public static void writeToFile(Connection con) throws IOException, SQLException 
 	Statement stmt = con.createStatement();
 	String sql = "SELECT * FROM bestellung";
 	
-	
 	ResultSet rs = stmt.executeQuery(sql);
 	FileWriter file = new FileWriter("output.json");
 	// 3. Alle Daten durchgehen
 	while (rs.next()) {
-		int id = rs.getInt("id");           // Spalte id
+		int id = rs.getInt("id");
 		int kid = rs.getInt("kunde_ID");
 		int aid = rs.getInt("artikel_ID");
 		int menge = rs.getInt("menge");
-		Timestamp date = rs.getTimestamp("datum"); // Timestamp aus DB
+		Timestamp date = rs.getTimestamp("datum");
 		jsonObject.put("id", id);
 		jsonObject.put("kundeID", kid);
 		jsonObject.put("artikelID", aid);

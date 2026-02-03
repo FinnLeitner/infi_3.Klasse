@@ -46,7 +46,24 @@ public static boolean create(Connection con,
     return true;
 }
 
-
+public static void printKundenBestellungen(Connection con) throws SQLException {
+    String sql = """
+            SELECT kunden.id, kunden.name, bestellung.artikel_id, bestellung.menge
+            FROM kunden
+            INNER JOIN bestellung ON kunden.id = bestellung.kunde_id
+            """;
+    
+    try (Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            System.out.println("ID: " + rs.getInt("id") +
+                    ", Name: " + rs.getString("name") +
+                    ", Artikel-ID: " + rs.getInt("artikel_id") +
+                    ", Menge: " + rs.getInt("menge"));
+        }
+    }
+}
 
 public static void remove(Connection con, int id)
         throws SQLException {

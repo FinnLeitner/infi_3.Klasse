@@ -4,6 +4,8 @@ import java.io.*;
 import java.sql.*;
 import java.util.Scanner;
 
+
+
 public class Main {
 
 private static String URL;
@@ -55,6 +57,7 @@ public static void main(String[] args) {
             System.out.println("4) Bestellung löschen");
             System.out.println("5) Kunde hinzufügen");
             System.out.println("6) Artikel hinzufügen");
+            System.out.println("7) Bestellungen anzeigen");
             System.out.println("0) Beenden");
             System.out.print("Auswahl: ");
             
@@ -95,6 +98,8 @@ public static void main(String[] args) {
                         System.out.print("Preis: ");
                         double preis = Double.parseDouble(sc.nextLine());
                         Artikel.add(con, name, preis);
+                    } case 7 -> {
+                        Bestellung.printKundenBestellungen(con);
                     }
                     case 0 -> running = false;
                 }

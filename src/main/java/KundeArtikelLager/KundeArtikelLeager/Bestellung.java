@@ -65,6 +65,76 @@ public static void printKundenBestellungen(Connection con) throws SQLException {
     }
 }
 
+public static void unionWith(Connection con) throws SQLException {
+    String sql = """
+        WITH viel_bestellt AS (
+            SELECT kunde_id, artikel_id, menge FROM bestellung WHERE menge > 20
+        ),
+        wenig_bestellt AS (
+            SELECT kunde_id, artikel_id, menge FROM bestellung WHERE menge <= 10
+        )
+        SELECT kunde_id, artikel_id, menge  FROM viel_bestellt
+        UNION
+        SELECT kunde_id, artikel_id, menge FROM wenig_bestellt
+        ORDER BY menge DESC
+        """;
+    
+    try (Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        while (rs.next()) {
+            System.out.println(
+                    "Kunde-ID: "   + rs.getInt("kunde_id")    +
+                            ", Artikel-ID: " + rs.getInt("artikel_id") +
+                            ", Menge: "    + rs.getInt("menge"));
+                           
+        }
+    }
+}
+
+public static void groupByHaving(Connection con) throws SQLException {
+    
+    String sql = """
+        SELECT artikel_id, COUNT(id) AS anzahl
+        FROM bestellung
+        GROUP BY artikel_id
+        HAVING COUNT(id) > 1
+        ORDER BY anzahl DESC
+        """;
+    
+    try (Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            System.out.println(
+                    "Artikel-ID: " + rs.getInt("artikel_id") +
+                            ", Bestellungen: " + rs.getInt("anzahl"));
+        }
+    }
+}
+
+public static void subSelect(Connection con) throws SQLException {
+    
+    String sql = """
+            SELECT *
+            FROM bestellung
+            WHERE menge > (
+                SELECT AVG(menge)
+                FROM bestellung
+            )
+            """;
+    
+    try (Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        
+        while (rs.next()) {
+            System.out.println("Bestellung-ID: " + rs.getInt("id") +
+                    ", Kunde-ID: " + rs.getInt("kunde_id") +
+                    ", Artikel-ID: " + rs.getInt("artikel_id") +
+                    ", Menge: " + rs.getInt("menge"));
+        }
+    }
+}
+
 public static void remove(Connection con, int id)
         throws SQLException {
     

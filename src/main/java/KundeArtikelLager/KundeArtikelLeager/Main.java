@@ -58,6 +58,9 @@ public static void main(String[] args) {
             System.out.println("5) Kunde hinzufügen");
             System.out.println("6) Artikel hinzufügen");
             System.out.println("7) Bestellungen anzeigen");
+            System.out.println("8) Bestellungen mit Bestellmenge über dem Durchsnitt anzeigen");
+            System.out.println("9) Artikel die am häufigsten bestellt wurden anzeigen");
+            System.out.println("10) Artikel die mehr als 20 mal bestellt wurden und auch weniger als 10 mal");
             System.out.println("0) Beenden");
             System.out.print("Auswahl: ");
             
@@ -100,7 +103,14 @@ public static void main(String[] args) {
                         Artikel.add(con, name, preis);
                     } case 7 -> {
                         Bestellung.printKundenBestellungen(con);
-                    }
+                    }case 8 -> {
+                        Bestellung.subSelect(con);                   }
+                     
+                    case 9 -> {
+                        Bestellung.groupByHaving(con);                   }
+                     case 10 -> {
+                        Bestellung.unionWith(con);                   }
+                    
                     case 0 -> running = false;
                 }
                 

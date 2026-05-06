@@ -1,4 +1,4 @@
-package Fussball_Club_Verwaltung;
+package Fussballclub_Verwaltung;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.field.FieldType;

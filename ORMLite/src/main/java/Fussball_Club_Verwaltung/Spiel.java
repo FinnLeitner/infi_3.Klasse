@@ -9,7 +9,7 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
-
+//Zeit einbauen
 @DatabaseTable(tableName = "spiel")
 public class Spiel {
 

@@ -22,7 +22,12 @@
             <artifactId>h2</artifactId>
             <version>2.2.224</version>
         </dependency>
-
+        <!-- Maven -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.51.0.0</version>
+        </dependency>
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

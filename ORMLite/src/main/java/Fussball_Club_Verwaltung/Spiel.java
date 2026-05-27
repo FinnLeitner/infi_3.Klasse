@@ -9,80 +9,201 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
-//Zeit einbauen
+import java.time.LocalTime;
+
+/**
+ * Repräsentiert ein Spiel im Spielplan.
+ *
+ * M05: datum, uhrzeit, heimmannschaft_id, gastmannschaft_id
+ * M06: tore_heim, tore_gast (Ergebniserfassung)
+ * M08: Ergebnis wird von Tabelle ausgewertet
+ */
 @DatabaseTable(tableName = "spiel")
 public class Spiel {
 
-public static final String FIELD_ID = "id";
-public static final String FIELD_GEGNER = "gegner";
-public static final String FIELD_DATUM = "datum";
+public static final String FIELD_ID              = "id";
+public static final String FIELD_DATUM           = "datum";
+public static final String FIELD_UHRZEIT         = "uhrzeit";
+public static final String FIELD_HEIMMANNSCHAFT  = "heimmannschaft_id";
+public static final String FIELD_GASTMANNSCHAFT  = "gastmannschaft_id";
+public static final String FIELD_TORE_HEIM       = "tore_heim";
+public static final String FIELD_TORE_GAST       = "tore_gast";
+public static final String FIELD_GESPIELT        = "gespielt";
 
 @DatabaseField(generatedId = true)
 private int id;
 
-@DatabaseField(canBeNull = false)
-private String gegner;
-
+/** M05: Datum des Spiels */
 @DatabaseField(canBeNull = false, persisterClass = LocalDatePersister.class)
 private LocalDate datum;
+
+/** M05: Uhrzeit des Spiels */
+@DatabaseField(canBeNull = true, persisterClass = LocalTimePersister.class)
+private LocalTime uhrzeit;
+
+/** M05: Heimmannschaft (Foreign Key → Mannschaft) */
+@DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true,
+		columnName = FIELD_HEIMMANNSCHAFT)
+private Mannschaft heimmannschaft;
+
+/** M05: Gastmannschaft (Foreign Key → Mannschaft) */
+@DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true,
+		columnName = FIELD_GASTMANNSCHAFT)
+private Mannschaft gastmannschaft;
+
+/** M06: Tore der Heimmannschaft */
+@DatabaseField(canBeNull = false)
+private int toreHeim = -1;  // -1 = noch nicht erfasst
+
+/** M06: Tore der Gastmannschaft */
+@DatabaseField(canBeNull = false)
+private int toreGast = -1;  // -1 = noch nicht erfasst
+
+/** Hilfsflag: wurde das Ergebnis schon eingetragen? */
+@DatabaseField(canBeNull = false)
+private boolean gespielt = false;
+
+// ── Für Rückwärtskompatibilität: einfaches Gegner-Feld ────────────────────
+// (Wird nicht mehr primär genutzt, Heimmannschaft/Gastmannschaft ist der Standard)
+@DatabaseField(canBeNull = true)
+private String gegner;
 
 Spiel() {
 	// Pflicht für ORMLite
 }
 
+/** Einfacher Konstruktor: Gegner als String + Datum (Legacy / Main-Demo) */
 public Spiel(String gegner, LocalDate datum) {
 	this.gegner = gegner;
-	this.datum = datum;
+	this.datum  = datum;
 }
 
-public int getId() {
-	return id;
+/** Vollständiger Konstruktor M05 */
+public Spiel(LocalDate datum, LocalTime uhrzeit,
+             Mannschaft heimmannschaft, Mannschaft gastmannschaft) {
+	this.datum           = datum;
+	this.uhrzeit         = uhrzeit;
+	this.heimmannschaft  = heimmannschaft;
+	this.gastmannschaft  = gastmannschaft;
 }
 
-public String getGegner() {
-	return gegner;
+// ── Ergebniserfassung M06 ────────────────────────────────────────────────
+
+/**
+ * Trägt das Spielergebnis ein.
+ * @param toreHeim Tore der Heimmannschaft
+ * @param toreGast Tore der Gastmannschaft
+ */
+public void ergebnisEintragen(int toreHeim, int toreGast) {
+	if (toreHeim < 0 || toreGast < 0)
+		throw new IllegalArgumentException("Tore dürfen nicht negativ sein.");
+	this.toreHeim  = toreHeim;
+	this.toreGast  = toreGast;
+	this.gespielt  = true;
 }
 
-public LocalDate getDatum() {
-	return datum;
+/** Liefert true, wenn das Ergebnis bereits erfasst wurde. */
+public boolean isGespielt() { return gespielt; }
+
+// ── Hilfsmethoden für Tabelle (M08) ─────────────────────────────────────
+
+/**
+ * Gibt den Namen der Siegermannschaft zurück,
+ * oder null bei Unentschieden / noch nicht gespielt.
+ */
+public String getSieger() {
+	if (!gespielt) return null;
+	if (toreHeim > toreGast) return heimmannschaft != null ? heimmannschaft.getName() : gegner;
+	if (toreGast > toreHeim) return gastmannschaft != null ? gastmannschaft.getName() : "Gast";
+	return null; // Unentschieden
 }
 
+public boolean isUnentschieden() {
+	return gespielt && toreHeim == toreGast;
+}
+
+// ── Getter & Setter ───────────────────────────────────────────────────────
+
+public int getId()                       { return id; }
+public LocalDate getDatum()              { return datum; }
+public LocalTime getUhrzeit()            { return uhrzeit; }
+public Mannschaft getHeimmannschaft()    { return heimmannschaft; }
+public Mannschaft getGastmannschaft()    { return gastmannschaft; }
+public int getToreHeim()                 { return toreHeim; }
+public int getToreGast()                 { return toreGast; }
+public String getGegner()                { return gegner; }
+
+public void setDatum(LocalDate datum)                     { this.datum = datum; }
+public void setUhrzeit(LocalTime uhrzeit)                 { this.uhrzeit = uhrzeit; }
+public void setHeimmannschaft(Mannschaft heimmannschaft)  { this.heimmannschaft = heimmannschaft; }
+public void setGastmannschaft(Mannschaft gastmannschaft)  { this.gastmannschaft = gastmannschaft; }
+
+@Override
+public String toString() {
+	String heim = heimmannschaft != null ? heimmannschaft.getName()
+			: (gegner != null ? "Arsenal" : "Heim");
+	String gast = gastmannschaft != null ? gastmannschaft.getName()
+			: (gegner != null ? gegner : "Gast");
+	String ergebnis = gespielt ? toreHeim + ":" + toreGast : "–:–";
+	String zeit = uhrzeit != null ? " " + uhrzeit : "";
+	return datum + zeit + "  " + heim + " vs. " + gast + "  " + ergebnis;
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+//  Inner Persister-Klassen
+// ═════════════════════════════════════════════════════════════════════════
+
+/** Persistiert LocalDate als ISO-String in SQLite */
 public static class LocalDatePersister extends BaseDataType {
 	
 	private static final LocalDatePersister INSTANCE = new LocalDatePersister();
-	
-	public static LocalDatePersister getSingleton() {
-		return INSTANCE;
-	}
+	public static LocalDatePersister getSingleton() { return INSTANCE; }
 	
 	private LocalDatePersister() {
 		super(SqlType.STRING, new Class<?>[]{ LocalDate.class });
 	}
 	
-	@Override
-	public Object parseDefaultString(FieldType fieldType, String defaultStr) {
-		return LocalDate.parse(defaultStr).toString();
-	}
+	@Override public Object parseDefaultString(FieldType ft, String s) { return s; }
+	@Override public int    getDefaultWidth()                           { return 10; }
 	
 	@Override
-	public int getDefaultWidth() {
-		return 10; // "2026-06-01" = 10 Zeichen
+	public Object resultToSqlArg(FieldType ft, DatabaseResults r, int col) throws SQLException {
+		return r.getString(col);
 	}
-	
 	@Override
-	public Object resultToSqlArg(FieldType fieldType, DatabaseResults results, int columnPos)
-			throws SQLException {
-		return results.getString(columnPos);
-	}
-	
-	@Override
-	public Object sqlArgToJava(FieldType fieldType, Object sqlArg, int columnPos) {
+	public Object sqlArgToJava(FieldType ft, Object sqlArg, int col) {
 		return LocalDate.parse((String) sqlArg);
 	}
+	@Override
+	public Object javaToSqlArg(FieldType ft, Object javaObj) {
+		return javaObj.toString();
+	}
+}
+
+/** Persistiert LocalTime als HH:mm-String in SQLite */
+public static class LocalTimePersister extends BaseDataType {
+	
+	private static final LocalTimePersister INSTANCE = new LocalTimePersister();
+	public static LocalTimePersister getSingleton() { return INSTANCE; }
+	
+	private LocalTimePersister() {
+		super(SqlType.STRING, new Class<?>[]{ LocalTime.class });
+	}
+	
+	@Override public Object parseDefaultString(FieldType ft, String s) { return s; }
+	@Override public int    getDefaultWidth()                           { return 5; }
 	
 	@Override
-	public Object javaToSqlArg(FieldType fieldType, Object javaObject) {
-		return javaObject.toString();
+	public Object resultToSqlArg(FieldType ft, DatabaseResults r, int col) throws SQLException {
+		return r.getString(col);
+	}
+	@Override
+	public Object sqlArgToJava(FieldType ft, Object sqlArg, int col) {
+		return LocalTime.parse((String) sqlArg);
+	}
+	@Override
+	public Object javaToSqlArg(FieldType ft, Object javaObj) {
+		return javaObj.toString();
 	}
 }
 }

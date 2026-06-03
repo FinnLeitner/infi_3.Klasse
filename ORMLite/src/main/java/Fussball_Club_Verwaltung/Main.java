@@ -9,24 +9,12 @@ import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import com.j256.ormlite.logger.Logger;
+import com.j256.ormlite.logger.Level;
 
-/**
- * Arsenal FC – Vollständiges Verwaltungsbeispiel Saison 2025/26
- *
- * Umgesetzte Pflichtfunktionen:
- *   M01 Spielerverwaltung  – anlegen, bearbeiten, löschen (name, geburtsdatum, position, trikotnummer)
- *   M02 Mannschaftsverwaltung – anlegen, Spieler zuordnen (1:n)
- *   M03 Datenbankanbindung – ORMLite + H2 (in-memory, produktiv: SQLite)
- *   M04 Trainerverwaltung  – anlegen, Mannschaft zuweisen
- *   M05 Spielplanverwaltung – Spiel mit Datum, Uhrzeit, Heim- & Gastmannschaft
- *   M06 Ergebniserfassung  – Tore eintragen und speichern
- *   M08 Ligatabelle        – automatische Berechnung aus Ergebnissen
- *
- * Optionale Erweiterungen:
- *   K02 Transferverwaltung – Spielerwechsel mit Datum protokollieren
- */
+// Schaltet alle ORMLite-Log-Meldungen ab
+
 public class Main {
-
 private static final String DATABASE_URL = "jdbc:sqlite:arsenal.db";
 
 private Dao<Spiel,        Integer> spielDao;
@@ -34,37 +22,42 @@ private Dao<Mannschaft,   Integer> mannschaftDao;
 private Dao<Spieler,      Integer> spielerDao;
 private Dao<Trikotnummer, Integer> trikotnummerDao;
 private Dao<Trainer,      Integer> trainerDao;
-private Dao<Transfer,     Integer> transferDao;   // K02
 
 public static void main(String[] args) throws Exception {
+	Logger.setGlobalLogLevel(Level.OFF);
+	
 	new Main().start();
 }
 
 public void start() throws Exception {
 	
-	// ── Datenbankverbindung & Tabellen ──────────────────────────────────
+	// ── Datenbankverbindung ──────────────────────────────────────────
 	ConnectionSource cs = new JdbcConnectionSource(DATABASE_URL);
 	
-	TableUtils.createTableIfNotExists(cs, Trainer.class);
-	TableUtils.createTableIfNotExists(cs, Mannschaft.class);
-	TableUtils.createTableIfNotExists(cs, Spiel.class);
-	TableUtils.createTableIfNotExists(cs, Spieler.class);
-	TableUtils.createTableIfNotExists(cs, Trikotnummer.class);
-	TableUtils.createTableIfNotExists(cs, Transfer.class);   // K02
+	// Tabellen neu aufbauen (löscht alte Daten → kein UNIQUE-Konflikt)
+	TableUtils.dropTable(cs, Trikotnummer.class, true);
+	TableUtils.dropTable(cs, Spieler.class,      true);
+	TableUtils.dropTable(cs, Spiel.class,        true);
+	TableUtils.dropTable(cs, Mannschaft.class,   true);
+	TableUtils.dropTable(cs, Trainer.class,      true);
+	
+	TableUtils.createTable(cs, Trainer.class);
+	TableUtils.createTable(cs, Mannschaft.class);
+	TableUtils.createTable(cs, Spiel.class);
+	TableUtils.createTable(cs, Spieler.class);
+	TableUtils.createTable(cs, Trikotnummer.class);
 	
 	trainerDao      = DaoManager.createDao(cs, Trainer.class);
 	spielDao        = DaoManager.createDao(cs, Spiel.class);
 	mannschaftDao   = DaoManager.createDao(cs, Mannschaft.class);
 	spielerDao      = DaoManager.createDao(cs, Spieler.class);
 	trikotnummerDao = DaoManager.createDao(cs, Trikotnummer.class);
-	transferDao     = DaoManager.createDao(cs, Transfer.class);  // K02
 	
-	// ── M04: Trainer ────────────────────────────────────────────────────
+	// ── M04: Trainer ─────────────────────────────────────────────────
 	Trainer arteta = new Trainer("Mikel Arteta", "Spanisch");
 	trainerDao.create(arteta);
 	
-	// ── M05: Mannschaften (Heim/Gast) ───────────────────────────────────
-	// Mannschaften ohne Spielbezug – repräsentieren den Club / das Team
+	// ── M05: Mannschaften ─────────────────────────────────────────────
 	Mannschaft arsenalStartelf1 = new Mannschaft("Arsenal Startelf – Chelsea",   11, true,  null, arteta);
 	Mannschaft arsenalErsatz1   = new Mannschaft("Arsenal Ersatzbank – Chelsea",  7, true,  null, arteta);
 	Mannschaft arsenalStartelf2 = new Mannschaft("Arsenal Startelf – Man City",  11, true,  null, arteta);
@@ -74,13 +67,12 @@ public void start() throws Exception {
 	mannschaftDao.create(arsenalStartelf2);
 	mannschaftDao.create(arsenalErsatz2);
 	
-	// Gegnerische "Mannschaften" (nur als Platzhalter für Heim/Gast-Zuordnung)
-	Mannschaft chelsea    = new Mannschaft("Chelsea FC",      11, false, null, null);
-	Mannschaft manCity    = new Mannschaft("Manchester City", 11, false, null, null);
+	Mannschaft chelsea = new Mannschaft("Chelsea FC",      11, false, null, null);
+	Mannschaft manCity = new Mannschaft("Manchester City", 11, false, null, null);
 	mannschaftDao.create(chelsea);
 	mannschaftDao.create(manCity);
 	
-	// ── M05: Spiele mit Datum, Uhrzeit, Heim- & Gastmannschaft ──────────
+	// ── M05: Spiele ───────────────────────────────────────────────────
 	Spiel spiel1 = new Spiel(LocalDate.of(2026, 5, 10), LocalTime.of(15, 30),
 			arsenalStartelf1, chelsea);
 	Spiel spiel2 = new Spiel(LocalDate.of(2026, 5, 17), LocalTime.of(17, 0),
@@ -92,7 +84,7 @@ public void start() throws Exception {
 	System.out.println("  " + spiel1);
 	System.out.println("  " + spiel2);
 	
-	// ── M01: Spieler anlegen (mit Geburtsdatum) ─────────────────────────
+	// ── M01: Spieler Spiel 1 ──────────────────────────────────────────
 	System.out.println("\n── Spiel 1 vs. Chelsea FC ─────────────────────────");
 	meldeSpielerAn("David Raya",         LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf1);
 	meldeSpielerAn("William Saliba",     LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf1);
@@ -114,11 +106,10 @@ public void start() throws Exception {
 	meldeSpielerAn("Leandro Trossard",   LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz1);
 	meldeSpielerAn("Ethan Nwaneri",      LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz1);
 	
-	// ── Überfüllungstest ─────────────────────────────────────────────────
 	System.out.println("\n── Überfüllungstest: 8. Ersatzspieler für Spiel 1 ──");
-	meldeSpielerAn("Noni Madueke", LocalDate.of(2001, 12, 14), "Flügel", 20, arsenalErsatz1); // abgelehnt
+	meldeSpielerAn("Noni Madueke", LocalDate.of(2001, 12, 14), "Flügel", 20, arsenalErsatz1);
 	
-	// ── Spiel 2 Kader ────────────────────────────────────────────────────
+	// ── Spiel 2 Kader ─────────────────────────────────────────────────
 	System.out.println("\n── Spiel 2 vs. Manchester City ─────────────────────");
 	meldeSpielerAn("David Raya",          LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf2);
 	meldeSpielerAn("William Saliba",      LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf2);
@@ -140,61 +131,44 @@ public void start() throws Exception {
 	meldeSpielerAn("Ethan Nwaneri",       LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz2);
 	meldeSpielerAn("Leandro Trossard",    LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz2);
 	
-	// ── M06: Ergebnisse eintragen ────────────────────────────────────────
+	// ── M06: Ergebnisse eintragen ─────────────────────────────────────
 	System.out.println("\n── M06 Ergebnisse eintragen ────────────────────────");
-	ergebnisEintragen(spiel1, 3, 1);  // Arsenal 3:1 Chelsea
-	ergebnisEintragen(spiel2, 2, 2);  // Arsenal 2:2 Man City
+	ergebnisEintragen(spiel1, 3, 1);
+	ergebnisEintragen(spiel2, 2, 2);
 	
-	// ── M01: Spieler bearbeiten (Positionswechsel als Beispiel) ──────────
+	// ── M01: Spieler bearbeiten ───────────────────────────────────────
 	System.out.println("\n── M01 Spieler bearbeiten ──────────────────────────");
 	spielerBearbeiten("Kai Havertz", "Sturm");
 	
-	// ── M01: Spieler löschen (Beispiel) ─────────────────────────────────
+	// ── M01: Spieler löschen ──────────────────────────────────────────
 	System.out.println("\n── M01 Spieler löschen ─────────────────────────────");
 	spielerLoeschen("Cristhian Mosquera");
 	
-	// ── K02: Transfer protokollieren ─────────────────────────────────────
-	System.out.println("\n── K02 Transfer protokollieren ─────────────────────");
-	transferProtokollieren("Noni Madueke", arsenalErsatz1, arsenalStartelf2,
-			LocalDate.of(2026, 5, 14));
-	
-	// ── Kaderbericht ausgeben ────────────────────────────────────────────
+	// ── Kaderbericht ──────────────────────────────────────────────────
 	System.out.println("\n======================================================");
 	System.out.println("  FC ARSENAL – KADERBERICHT SAISON 2025/26");
 	System.out.println("======================================================");
 	
-	List<Mannschaft> mannschaften = mannschaftDao.queryForAll();
-	for (Mannschaft m : mannschaften) {
+	for (Mannschaft m : mannschaftDao.queryForAll()) {
 		if (m.getKaderlimit() == 11 || m.getKaderlimit() == 7) {
 			kaderAusgeben(m);
 		}
 	}
 	
-	// ── M08: Ligatabelle berechnen und ausgeben ──────────────────────────
+	// ── M08: Ligatabelle ──────────────────────────────────────────────
 	Ligatabelle tabelle = new Ligatabelle();
 	for (Spiel s : spielDao.queryForAll()) {
 		tabelle.spielErfassen(s);
 	}
 	tabelle.ausgeben();
 	
-	// ── K02: Transfer-Protokoll ausgeben ─────────────────────────────────
-	System.out.println("── K02 Transfer-Protokoll ──────────────────────────");
-	for (Transfer t : transferDao.queryForAll()) {
-		System.out.println("  " + t);
-	}
-	System.out.println();
-	
 	cs.close();
 }
 
-// ═════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 //  Hilfsmethoden
-// ═════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 
-/**
- * M01 + M02: Spieler anlegen und Mannschaft zuordnen.
- * Legt auch eine Trikotnummer an, falls noch nicht vorhanden.
- */
 private void meldeSpielerAn(String name, LocalDate geburtsdatum,
                             String position, int trikotnr, Mannschaft mannschaft)
 		throws Exception {
@@ -207,11 +181,9 @@ private void meldeSpielerAn(String name, LocalDate geburtsdatum,
 		return;
 	}
 	
-	// M01: Spieler anlegen (mit Geburtsdatum)
 	Spieler sp = new Spieler(name, geburtsdatum, position, frisch);
 	spielerDao.create(sp);
 	
-	// Trikotnummer anlegen, falls noch nicht vergeben
 	List<Trikotnummer> vorhandene = trikotnummerDao.queryForEq(
 			Trikotnummer.FIELD_NUMMER, trikotnr);
 	if (vorhandene.isEmpty()) {
@@ -222,9 +194,6 @@ private void meldeSpielerAn(String name, LocalDate geburtsdatum,
 			trikotnr, name, geburtsdatum, frisch.getName());
 }
 
-/**
- * M01: Spieler bearbeiten – Position aktualisieren (Beispiel).
- */
 private void spielerBearbeiten(String name, String neuePosition) throws Exception {
 	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
 	if (gefunden.isEmpty()) {
@@ -238,9 +207,6 @@ private void spielerBearbeiten(String name, String neuePosition) throws Exceptio
 	System.out.printf("  ~ %-25s: Position %s → %s%n", name, alt, neuePosition);
 }
 
-/**
- * M01: Spieler löschen (inkl. verknüpfte Trikotnummer).
- */
 private void spielerLoeschen(String name) throws Exception {
 	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
 	if (gefunden.isEmpty()) {
@@ -248,7 +214,6 @@ private void spielerLoeschen(String name) throws Exception {
 		return;
 	}
 	Spieler sp = gefunden.get(0);
-	// Trikotnummer des Spielers zuerst löschen (FK-Constraint)
 	List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(
 			Trikotnummer.FIELD_SPIELER, sp.getId());
 	for (Trikotnummer tn : nrListe) trikotnummerDao.delete(tn);
@@ -256,43 +221,12 @@ private void spielerLoeschen(String name) throws Exception {
 	System.out.printf("  - %-25s gelöscht%n", name);
 }
 
-/**
- * M06: Ergebnis eines Spiels eintragen und in DB speichern.
- */
 private void ergebnisEintragen(Spiel spiel, int toreHeim, int toreGast) throws Exception {
 	spiel.ergebnisEintragen(toreHeim, toreGast);
 	spielDao.update(spiel);
 	System.out.printf("  Ergebnis gespeichert: %s%n", spiel);
 }
 
-/**
- * K02: Transfer eines Spielers zwischen zwei Mannschaften protokollieren.
- * Aktualisiert gleichzeitig den Mannschaftseintrag des Spielers.
- */
-private void transferProtokollieren(String spielerName,
-                                    Mannschaft von, Mannschaft nach,
-                                    LocalDate datum) throws Exception {
-	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, spielerName);
-	if (gefunden.isEmpty()) {
-		System.out.println("  ! Spieler für Transfer nicht gefunden: " + spielerName);
-		return;
-	}
-	Spieler sp = gefunden.get(0);
-	
-	// Transfer-Eintrag anlegen (K02)
-	Transfer transfer = new Transfer(sp, von, nach, datum);
-	transferDao.create(transfer);
-	
-	// Mannschaftszuweisung des Spielers aktualisieren
-	sp.setMannschaft(nach);
-	spielerDao.update(sp);
-	
-	System.out.println("  → Transfer: " + transfer);
-}
-
-/**
- * Gibt den Kader einer Mannschaft formatiert aus.
- */
 private void kaderAusgeben(Mannschaft m) throws Exception {
 	Mannschaft frisch = mannschaftDao.queryForId(m.getId());
 	int belegt = frisch.getKaderlimit() - frisch.freieKaderplaetze();
@@ -310,7 +244,7 @@ private void kaderAusgeben(Mannschaft m) throws Exception {
 	for (Spieler sp : spielerListe) {
 		List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(
 				Trikotnummer.FIELD_SPIELER, sp.getId());
-		String nr = nrListe.isEmpty() ? " –" : String.format("%2d", nrListe.get(0).getNummer());
+		String nr  = nrListe.isEmpty() ? " –" : String.format("%2d", nrListe.get(0).getNummer());
 		String geb = sp.getGeburtsdatum() != null ? sp.getGeburtsdatum().toString() : "–";
 		System.out.printf("    #%-3s %-25s  %-12s  *%s%n",
 				nr, sp.getName(), sp.getPosition(), geb);

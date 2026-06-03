@@ -38,12 +38,12 @@ Spieler() {
 	// Pflicht für ORMLite
 }
 
-/** Kompakter Konstruktor ohne Geburtsdatum (Rückwärtskompatibilität) */
+
 public Spieler(String name, String position, Mannschaft mannschaft) {
 	this(name, null, position, mannschaft);
 }
 
-/** Vollständiger Konstruktor mit Geburtsdatum (M01) */
+
 public Spieler(String name, LocalDate geburtsdatum, String position, Mannschaft mannschaft) {
 	this.name          = name;
 	this.geburtsdatum  = geburtsdatum;
@@ -51,7 +51,7 @@ public Spieler(String name, LocalDate geburtsdatum, String position, Mannschaft 
 	this.mannschaft    = mannschaft;
 }
 
-// ── Getter ────────────────────────────────────────────────────────────────
+
 
 public int getId()               { return id; }
 public String getName()          { return name; }
@@ -59,7 +59,6 @@ public LocalDate getGeburtsdatum() { return geburtsdatum; }
 public String getPosition()      { return position; }
 public Mannschaft getMannschaft(){ return mannschaft; }
 
-// ── Setter (für Bearbeiten / M01: bearbeiten) ─────────────────────────────
 
 public void setName(String name)                   { this.name = name; }
 public void setGeburtsdatum(LocalDate geburtsdatum){ this.geburtsdatum = geburtsdatum; }

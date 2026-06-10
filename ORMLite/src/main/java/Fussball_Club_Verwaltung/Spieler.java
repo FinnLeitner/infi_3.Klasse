@@ -5,10 +5,6 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import java.time.LocalDate;
 
-/**
- * Repräsentiert einen Spieler im Fußballclub.
- * M01: name, geburtsdatum, position, trikotnummer, mannschaft_id
- */
 @DatabaseTable(tableName = "spieler")
 public class Spieler {
 
@@ -24,7 +20,7 @@ private int id;
 @DatabaseField(canBeNull = false)
 private String name;
 
-/** M01: Geburtsdatum des Spielers */
+// Geburtsdatum des Spielers
 @DatabaseField(canBeNull = true, persisterClass = Spiel.LocalDatePersister.class)
 private LocalDate geburtsdatum;
 

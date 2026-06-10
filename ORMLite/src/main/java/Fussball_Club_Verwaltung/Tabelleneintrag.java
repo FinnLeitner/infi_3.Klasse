@@ -1,11 +1,6 @@
 package Fussball_Club_Verwaltung;
 
-/**
- * M08: Eintrag in der Ligatabelle.
- *
- * Wird nicht persistiert – wird zur Laufzeit aus den Spielergebnissen berechnet.
- * Punkte: Sieg = 3, Unentschieden = 1, Niederlage = 0
- */
+
 public class Tabelleneintrag implements Comparable<Tabelleneintrag> {
 
 private final String mannschaftsname;

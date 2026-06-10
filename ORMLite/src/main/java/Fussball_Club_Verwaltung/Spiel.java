@@ -11,13 +11,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/**
- * Repräsentiert ein Spiel im Spielplan.
- *
- * M05: datum, uhrzeit, heimmannschaft_id, gastmannschaft_id
- * M06: tore_heim, tore_gast (Ergebniserfassung)
- * M08: Ergebnis wird von Tabelle ausgewertet
- */
+
 @DatabaseTable(tableName = "spiel")
 public class Spiel {
 
@@ -33,33 +27,33 @@ public static final String FIELD_GESPIELT        = "gespielt";
 @DatabaseField(generatedId = true)
 private int id;
 
-/** M05: Datum des Spiels */
+// Datum des Spiels
 @DatabaseField(canBeNull = false, persisterClass = LocalDatePersister.class)
 private LocalDate datum;
 
-/** M05: Uhrzeit des Spiels */
+// Uhrzeit des Spiels
 @DatabaseField(canBeNull = true, persisterClass = LocalTimePersister.class)
 private LocalTime uhrzeit;
 
-/** M05: Heimmannschaft (Foreign Key → Mannschaft) */
+// Heimmannschaft (Foreign Key → Mannschaft)
 @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true,
 		columnName = FIELD_HEIMMANNSCHAFT)
 private Mannschaft heimmannschaft;
 
-/** M05: Gastmannschaft (Foreign Key → Mannschaft) */
+// Gastmannschaft (Foreign Key → Mannschaft)
 @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true,
 		columnName = FIELD_GASTMANNSCHAFT)
 private Mannschaft gastmannschaft;
 
-/** M06: Tore der Heimmannschaft */
+// Tore der Heimmannschaft
 @DatabaseField(canBeNull = false)
 private int toreHeim = -1;  // -1 = noch nicht erfasst
 
-/** M06: Tore der Gastmannschaft */
+//: Tore der Gastmannschaft
 @DatabaseField(canBeNull = false)
 private int toreGast = -1;  // -1 = noch nicht erfasst
 
-/** Hilfsflag: wurde das Ergebnis schon eingetragen? */
+// Hilfsflag: wurde das Ergebnis schon eingetragen?
 @DatabaseField(canBeNull = false)
 private boolean gespielt = false;
 
@@ -72,22 +66,20 @@ Spiel() {
 	// Pflicht für ORMLite
 }
 
-/** Einfacher Konstruktor: Gegner als String + Datum (Legacy / Main-Demo) */
+// Einfacher Konstruktor: Gegner als String + Datum
 public Spiel(String gegner, LocalDate datum) {
 	this.gegner = gegner;
 	this.datum  = datum;
 }
 
-/** Vollständiger Konstruktor M05 */
-public Spiel(LocalDate datum, LocalTime uhrzeit,
-             Mannschaft heimmannschaft, Mannschaft gastmannschaft) {
+// Vollständiger Konstruktor
+public Spiel(LocalDate datum, LocalTime uhrzeit, Mannschaft heimmannschaft, Mannschaft gastmannschaft) {
 	this.datum           = datum;
 	this.uhrzeit         = uhrzeit;
 	this.heimmannschaft  = heimmannschaft;
 	this.gastmannschaft  = gastmannschaft;
 }
 
-// ── Ergebniserfassung M06 ────────────────────────────────────────────────
 
 /**
  * Trägt das Spielergebnis ein.
@@ -95,21 +87,16 @@ public Spiel(LocalDate datum, LocalTime uhrzeit,
  * @param toreGast Tore der Gastmannschaft
  */
 public void ergebnisEintragen(int toreHeim, int toreGast) {
-	if (toreHeim < 0 || toreGast < 0)
-		throw new IllegalArgumentException("Tore dürfen nicht negativ sein.");
 	this.toreHeim  = toreHeim;
 	this.toreGast  = toreGast;
 	this.gespielt  = true;
 }
 
-/** Liefert true, wenn das Ergebnis bereits erfasst wurde. */
+// Liefert true, wenn das Ergebnis bereits erfasst wurde.
 public boolean isGespielt() { return gespielt; }
-
-// ── Hilfsmethoden für Tabelle (M08) ─────────────────────────────────────
-
-/**
- * Gibt den Namen der Siegermannschaft zurück,
- * oder null bei Unentschieden / noch nicht gespielt.
+/*
+ Gibt den Namen der Siegermannschaft zurück,
+ oder null bei Unentschieden / noch nicht gespielt.
  */
 public String getSieger() {
 	if (!gespielt) return null;
@@ -119,6 +106,7 @@ public String getSieger() {
 }
 
 public boolean isUnentschieden() {
+	
 	return gespielt && toreHeim == toreGast;
 }
 
@@ -149,11 +137,9 @@ public String toString() {
 	return datum + zeit + "  " + heim + " vs. " + gast + "  " + ergebnis;
 }
 
-// ═════════════════════════════════════════════════════════════════════════
-//  Inner Persister-Klassen
-// ═════════════════════════════════════════════════════════════════════════
 
-/** Persistiert LocalDate als ISO-String in SQLite */
+
+//ersistiert LocalDate als ISO-String in SQLite
 public static class LocalDatePersister extends BaseDataType {
 	
 	private static final LocalDatePersister INSTANCE = new LocalDatePersister();
@@ -180,7 +166,7 @@ public static class LocalDatePersister extends BaseDataType {
 	}
 }
 
-/** Persistiert LocalTime als HH:mm-String in SQLite */
+// Persistiert LocalTime als HH:mm-String in SQLite
 public static class LocalTimePersister extends BaseDataType {
 	
 	private static final LocalTimePersister INSTANCE = new LocalTimePersister();

@@ -3,10 +3,7 @@ package Fussball_Club_Verwaltung;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-/**
- * Repräsentiert die Trikotnummer eines Spielers im Club.
- * Eine Trikotnummer ist clubweit eindeutig (unabhängig vom Spiel).
- */
+
 @DatabaseTable(tableName = "trikotnummer")
 public class Trikotnummer {
 

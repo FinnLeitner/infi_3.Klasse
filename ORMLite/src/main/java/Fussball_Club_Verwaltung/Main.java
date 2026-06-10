@@ -12,7 +12,6 @@ import com.j256.ormlite.table.TableUtils;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.Level;
 
-// Schaltet alle ORMLite-Log-Meldungen ab
 
 public class Main {
 private static final String DATABASE_URL = "jdbc:sqlite:arsenal.db";
@@ -24,6 +23,7 @@ private Dao<Trikotnummer, Integer> trikotnummerDao;
 private Dao<Trainer,      Integer> trainerDao;
 
 public static void main(String[] args) throws Exception {
+	//schaltet den ORMLite logger aus
 	Logger.setGlobalLogLevel(Level.OFF);
 	
 	new Main().start();
@@ -31,7 +31,7 @@ public static void main(String[] args) throws Exception {
 
 public void start() throws Exception {
 	
-	// ── Datenbankverbindung ──────────────────────────────────────────
+	// ── Datenbankverbindung erstellen
 	ConnectionSource cs = new JdbcConnectionSource(DATABASE_URL);
 	
 	// Tabellen neu aufbauen (löscht alte Daten → kein UNIQUE-Konflikt)
@@ -53,109 +53,85 @@ public void start() throws Exception {
 	spielerDao      = DaoManager.createDao(cs, Spieler.class);
 	trikotnummerDao = DaoManager.createDao(cs, Trikotnummer.class);
 	
-	// ── M04: Trainer ─────────────────────────────────────────────────
+	//Trainer erstellen
 	Trainer arteta = new Trainer("Mikel Arteta", "Spanisch");
 	trainerDao.create(arteta);
 	
-	// ── M05: Mannschaften ─────────────────────────────────────────────
-	Mannschaft arsenalStartelf1 = new Mannschaft("Arsenal Startelf – Chelsea",   11, true,  null, arteta);
-	Mannschaft arsenalErsatz1   = new Mannschaft("Arsenal Ersatzbank – Chelsea",  7, true,  null, arteta);
-	Mannschaft arsenalStartelf2 = new Mannschaft("Arsenal Startelf – Man City",  11, true,  null, arteta);
-	Mannschaft arsenalErsatz2   = new Mannschaft("Arsenal Ersatzbank – Man City", 7, true,  null, arteta);
-	mannschaftDao.create(arsenalStartelf1);
-	mannschaftDao.create(arsenalErsatz1);
-	mannschaftDao.create(arsenalStartelf2);
-	mannschaftDao.create(arsenalErsatz2);
+	
+	// Startelf und Ersatzbank erstellen
+	Mannschaft arsenalStartelf = new Mannschaft("Arsenal Startelf", 11, true, null, arteta);
+	Mannschaft arsenalErsatz   = new Mannschaft("Arsenal Ersatzbank", 7, true, null, arteta);
+	mannschaftDao.create(arsenalStartelf);
+	mannschaftDao.create(arsenalErsatz);
 	
 	Mannschaft chelsea = new Mannschaft("Chelsea FC",      11, false, null, null);
 	Mannschaft manCity = new Mannschaft("Manchester City", 11, false, null, null);
 	mannschaftDao.create(chelsea);
 	mannschaftDao.create(manCity);
 	
-	// ── M05: Spiele ───────────────────────────────────────────────────
+	
+	// Spiele anmelden
 	Spiel spiel1 = new Spiel(LocalDate.of(2026, 5, 10), LocalTime.of(15, 30),
-			arsenalStartelf1, chelsea);
+			arsenalStartelf, chelsea);
 	Spiel spiel2 = new Spiel(LocalDate.of(2026, 5, 17), LocalTime.of(17, 0),
-			arsenalStartelf2, manCity);
+			arsenalStartelf, manCity);
 	spielDao.create(spiel1);
 	spielDao.create(spiel2);
 	
-	System.out.println("── M05 Spielplan ──────────────────────────────────");
+	System.out.println(" Spielplan ──────────────────────────────────");
 	System.out.println("  " + spiel1);
 	System.out.println("  " + spiel2);
 	
-	// ── M01: Spieler Spiel 1 ──────────────────────────────────────────
-	System.out.println("\n── Spiel 1 vs. Chelsea FC ─────────────────────────");
-	meldeSpielerAn("David Raya",         LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf1);
-	meldeSpielerAn("William Saliba",     LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf1);
-	meldeSpielerAn("Ben White",          LocalDate.of(1997, 10, 8),  "Abwehr",     4,  arsenalStartelf1);
-	meldeSpielerAn("Gabriel Magalhaes",  LocalDate.of(1997, 12, 19), "Abwehr",     6,  arsenalStartelf1);
-	meldeSpielerAn("Jurrien Timber",     LocalDate.of(2001, 6,  17), "Abwehr",     12, arsenalStartelf1);
-	meldeSpielerAn("Declan Rice",        LocalDate.of(1999, 1,  14), "Mittelfeld", 41, arsenalStartelf1);
-	meldeSpielerAn("Martin Zubimendi",   LocalDate.of(1999, 2,  2),  "Mittelfeld", 36, arsenalStartelf1);
-	meldeSpielerAn("Martin Odegaard",    LocalDate.of(1998, 12, 17), "Mittelfeld", 8,  arsenalStartelf1);
-	meldeSpielerAn("Bukayo Saka",        LocalDate.of(2001, 9,  5),  "Flügel",     7,  arsenalStartelf1);
-	meldeSpielerAn("Viktor Gyokeres",    LocalDate.of(1998, 6,  4),  "Sturm",      14, arsenalStartelf1);
-	meldeSpielerAn("Gabriel Martinelli", LocalDate.of(2001, 6,  18), "Flügel",     11, arsenalStartelf1);
+	// alle Spieler anmelden
+	System.out.println("\n── Arsenal Kader (für beide Spiele) ───────────────");
+	meldeSpielerAn("David Raya",         LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf);
+	meldeSpielerAn("William Saliba",     LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf);
+	meldeSpielerAn("Ben White",          LocalDate.of(1997, 10, 8),  "Abwehr",     4,  arsenalStartelf);
+	meldeSpielerAn("Gabriel Magalhaes",  LocalDate.of(1997, 12, 19), "Abwehr",     6,  arsenalStartelf);
+	meldeSpielerAn("Jurrien Timber",     LocalDate.of(2001, 6,  17), "Abwehr",     12, arsenalStartelf);
+	meldeSpielerAn("Declan Rice",        LocalDate.of(1999, 1,  14), "Mittelfeld", 41, arsenalStartelf);
+	meldeSpielerAn("Martin Zubimendi",   LocalDate.of(1999, 2,  2),  "Mittelfeld", 36, arsenalStartelf);
+	meldeSpielerAn("Martin Odegaard",    LocalDate.of(1998, 12, 17), "Mittelfeld", 8,  arsenalStartelf);
+	meldeSpielerAn("Bukayo Saka",        LocalDate.of(2001, 9,  5),  "Flügel",     7,  arsenalStartelf);
+	meldeSpielerAn("Viktor Gyokeres",    LocalDate.of(1998, 6,  4),  "Sturm",      14, arsenalStartelf);
+	meldeSpielerAn("Gabriel Martinelli", LocalDate.of(2001, 6,  18), "Flügel",     11, arsenalStartelf);
+	// Ersatzbank
+	meldeSpielerAn("Kepa Arrizabalaga",  LocalDate.of(1994, 10, 3),  "Torwart",    13, arsenalErsatz);
+	meldeSpielerAn("Cristhian Mosquera", LocalDate.of(2004, 4,  17), "Abwehr",     3,  arsenalErsatz);
+	meldeSpielerAn("Riccardo Calafiori", LocalDate.of(2002, 5,  19), "Abwehr",     33, arsenalErsatz);
+	meldeSpielerAn("Mikel Merino",       LocalDate.of(1996, 6,  22), "Mittelfeld", 23, arsenalErsatz);
+	meldeSpielerAn("Kai Havertz",        LocalDate.of(1999, 6,  11), "Mittelfeld", 29, arsenalErsatz);
+	meldeSpielerAn("Leandro Trossard",   LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz);
+	meldeSpielerAn("Ethan Nwaneri",      LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz);
 	
-	meldeSpielerAn("Kepa Arrizabalaga",  LocalDate.of(1994, 10, 3),  "Torwart",    13, arsenalErsatz1);
-	meldeSpielerAn("Cristhian Mosquera", LocalDate.of(2004, 4,  17), "Abwehr",     3,  arsenalErsatz1);
-	meldeSpielerAn("Riccardo Calafiori", LocalDate.of(2002, 5,  19), "Abwehr",     33, arsenalErsatz1);
-	meldeSpielerAn("Mikel Merino",       LocalDate.of(1996, 6,  22), "Mittelfeld", 23, arsenalErsatz1);
-	meldeSpielerAn("Kai Havertz",        LocalDate.of(1999, 6,  11), "Mittelfeld", 29, arsenalErsatz1);
-	meldeSpielerAn("Leandro Trossard",   LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz1);
-	meldeSpielerAn("Ethan Nwaneri",      LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz1);
+	System.out.println("\n── Überfüllungstest: 8. Ersatzspieler ──────────────");
+	meldeSpielerAn("Noni Madueke", LocalDate.of(2001, 12, 14), "Flügel", 20, arsenalErsatz);
 	
-	System.out.println("\n── Überfüllungstest: 8. Ersatzspieler für Spiel 1 ──");
-	meldeSpielerAn("Noni Madueke", LocalDate.of(2001, 12, 14), "Flügel", 20, arsenalErsatz1);
-	
-	// ── Spiel 2 Kader ─────────────────────────────────────────────────
-	System.out.println("\n── Spiel 2 vs. Manchester City ─────────────────────");
-	meldeSpielerAn("David Raya",          LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf2);
-	meldeSpielerAn("William Saliba",      LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf2);
-	meldeSpielerAn("Riccardo Calafiori",  LocalDate.of(2002, 5,  19), "Abwehr",     33, arsenalStartelf2);
-	meldeSpielerAn("Gabriel Magalhaes",   LocalDate.of(1997, 12, 19), "Abwehr",     6,  arsenalStartelf2);
-	meldeSpielerAn("Myles Lewis-Skelly",  LocalDate.of(2006, 9,  26), "Abwehr",     49, arsenalStartelf2);
-	meldeSpielerAn("Declan Rice",         LocalDate.of(1999, 1,  14), "Mittelfeld", 41, arsenalStartelf2);
-	meldeSpielerAn("Martin Zubimendi",    LocalDate.of(1999, 2,  2),  "Mittelfeld", 36, arsenalStartelf2);
-	meldeSpielerAn("Noni Madueke",        LocalDate.of(2001, 12, 14), "Flügel",     20, arsenalStartelf2);
-	meldeSpielerAn("Bukayo Saka",         LocalDate.of(2001, 9,  5),  "Flügel",     7,  arsenalStartelf2);
-	meldeSpielerAn("Viktor Gyokeres",     LocalDate.of(1998, 6,  4),  "Sturm",      14, arsenalStartelf2);
-	meldeSpielerAn("Gabriel Martinelli",  LocalDate.of(2001, 6,  18), "Flügel",     11, arsenalStartelf2);
-	
-	meldeSpielerAn("Kepa Arrizabalaga",   LocalDate.of(1994, 10, 3),  "Torwart",    13, arsenalErsatz2);
-	meldeSpielerAn("Ben White",           LocalDate.of(1997, 10, 8),  "Abwehr",     4,  arsenalErsatz2);
-	meldeSpielerAn("Jakub Kiwior",        LocalDate.of(2000, 2,  26), "Abwehr",     15, arsenalErsatz2);
-	meldeSpielerAn("Kai Havertz",         LocalDate.of(1999, 6,  11), "Mittelfeld", 29, arsenalErsatz2);
-	meldeSpielerAn("Mikel Merino",        LocalDate.of(1996, 6,  22), "Mittelfeld", 23, arsenalErsatz2);
-	meldeSpielerAn("Ethan Nwaneri",       LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz2);
-	meldeSpielerAn("Leandro Trossard",    LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz2);
-	
-	// ── M06: Ergebnisse eintragen ─────────────────────────────────────
-	System.out.println("\n── M06 Ergebnisse eintragen ────────────────────────");
+	//  Ergebnisse eintragen
+	System.out.println("\n Ergebnisse eintragen ────────────────────────");
 	ergebnisEintragen(spiel1, 3, 1);
 	ergebnisEintragen(spiel2, 2, 2);
 	
-	// ── M01: Spieler bearbeiten ───────────────────────────────────────
-	System.out.println("\n── M01 Spieler bearbeiten ──────────────────────────");
+	//Spieler bearbeiten ───────────────────────────────────────
+	System.out.println("\n Spieler bearbeiten ──────────────────────────");
 	spielerBearbeiten("Kai Havertz", "Sturm");
 	
-	// ── M01: Spieler löschen ──────────────────────────────────────────
-	System.out.println("\n── M01 Spieler löschen ─────────────────────────────");
+	//Spieler löschen ──────────────────────────────────────────
+	System.out.println("\n Spieler löschen ─────────────────────────────");
 	spielerLoeschen("Cristhian Mosquera");
 	
-	// ── Kaderbericht ──────────────────────────────────────────────────
-	System.out.println("\n======================================================");
-	System.out.println("  FC ARSENAL – KADERBERICHT SAISON 2025/26");
-	System.out.println("======================================================");
+	// Kaderbericht ──────────────────────────────────────────────────
+	System.out.println("\n");
+	System.out.println("  FC ARSENAL – KADERBERICHT SAISON 2025/26"+"\n");
+
 	
 	for (Mannschaft m : mannschaftDao.queryForAll()) {
-		if (m.getKaderlimit() == 11 || m.getKaderlimit() == 7) {
+		if (m.isHeimspiel()) {
 			kaderAusgeben(m);
 		}
 	}
 	
-	// ── M08: Ligatabelle ──────────────────────────────────────────────
+	// Ligatabelle erstellen
 	Ligatabelle tabelle = new Ligatabelle();
 	for (Spiel s : spielDao.queryForAll()) {
 		tabelle.spielErfassen(s);
@@ -165,9 +141,6 @@ public void start() throws Exception {
 	cs.close();
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-//  Hilfsmethoden
-// ═══════════════════════════════════════════════════════════════════════
 
 private void meldeSpielerAn(String name, LocalDate geburtsdatum,
                             String position, int trikotnr, Mannschaft mannschaft)

@@ -6,11 +6,10 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import java.util.Collection;
 
-/**
- * Repräsentiert eine Mannschaft (Startelf oder Ersatzbank) für ein Spiel.
- *
- * M02: Mannschaft anlegen, Spieler zuordnen (1:n)
- * M04: Trainer ist zugewiesen
+/*
+ Repräsentiert eine Mannschaft (Startelf oder Ersatzbank) für ein Spiel.
+ Mannschaft anlegen, Spieler zuordnen (1:n)
+ Trainer ist zugewiesen
  */
 @DatabaseTable(tableName = "mannschaft")
 public class Mannschaft {
@@ -31,18 +30,18 @@ private String name;
 @DatabaseField(canBeNull = false)
 private int kaderlimit;
 
-/** true = Heimmannschaft, false = Gastmannschaft */
+// true = Heimmannschaft, false = Gastmannschaft
 @DatabaseField(canBeNull = false)
 private boolean heimspiel;
 
-/**
- * M05: Optionale Verknüpfung zu einem Spiel.
- * Kann null sein, wenn die Mannschaft noch keinem Spiel zugeordnet ist.
+/*
+ Optionale Verknüpfung zu einem Spiel.
+  Kann null sein, wenn die Mannschaft noch keinem Spiel zugeordnet ist.
  */
 @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true)
 private Spiel spiel;
 
-/** M04: Trainer der Mannschaft (kann null sein bei Gastteams) */
+// Trainer der Mannschaft (kann null sein bei Gastteams)
 @DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true)
 private Trainer trainer;
 
@@ -53,7 +52,7 @@ Mannschaft() {
 	// Pflicht für ORMLite
 }
 
-/** Konstruktor mit optionalem Spiel (null erlaubt) */
+// Konstruktor mit optionalem Spiel (null erlaubt)
 public Mannschaft(String name, int kaderlimit, boolean heimspiel, Spiel spiel, Trainer trainer) {
 	this.name       = name;
 	this.kaderlimit = kaderlimit;

@@ -6,24 +6,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * M08: Automatische Berechnung der Ligatabelle aus Spielergebnissen.
- *
- * Verwendung:
- *   Ligatabelle tabelle = new Ligatabelle();
- *   tabelle.spielErfassen(spiel);      // für jedes gespielte Spiel
- *   tabelle.ausgeben();
- */
+
 public class Ligatabelle {
 
 /** Mannschaftsname → Tabelleneintrag */
 private final Map<String, Tabelleneintrag> eintraege = new LinkedHashMap<>();
 
-/**
- * Verarbeitet ein einzelnes Spiel.
- * Wird ignoriert, wenn das Spiel noch nicht gespielt wurde.
- *
- * @param spiel Ein Spiel mit eingetragenem Ergebnis (M06)
+/*
+  Verarbeitet ein einzelnes Spiel.
+  Wird ignoriert, wenn das Spiel noch nicht gespielt wurde.
+  @param spiel Ein Spiel mit eingetragenem Ergebnis
  */
 public void spielErfassen(Spiel spiel) {
 	if (!spiel.isGespielt()) return;
@@ -54,8 +46,8 @@ public void spielErfassen(Spiel spiel) {
 	}
 }
 
-/**
- * Gibt alle Einträge sortiert zurück (Punkte → Tordifferenz → Tore).
+/*
+Gibt alle Einträge sortiert zurück (Punkte → Tordifferenz → Tore).
  */
 public List<Tabelleneintrag> getSortierteTabelle() {
 	List<Tabelleneintrag> liste = new ArrayList<>(eintraege.values());
@@ -63,8 +55,8 @@ public List<Tabelleneintrag> getSortierteTabelle() {
 	return liste;
 }
 
-/**
- * Gibt die Ligatabelle formatiert auf der Konsole aus.
+/*
+ Gibt die Ligatabelle formatiert auf der Konsole aus.
  */
 public void ausgeben() {
 	List<Tabelleneintrag> sortiert = getSortierteTabelle();

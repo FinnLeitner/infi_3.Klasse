@@ -3,6 +3,7 @@ package Fussball_Club_Verwaltung;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Scanner;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
@@ -12,8 +13,8 @@ import com.j256.ormlite.table.TableUtils;
 import com.j256.ormlite.logger.Logger;
 import com.j256.ormlite.logger.Level;
 
-
 public class Main {
+
 private static final String DATABASE_URL = "jdbc:sqlite:arsenal.db";
 
 private Dao<Spiel,        Integer> spielDao;
@@ -22,30 +23,21 @@ private Dao<Spieler,      Integer> spielerDao;
 private Dao<Trikotnummer, Integer> trikotnummerDao;
 private Dao<Trainer,      Integer> trainerDao;
 
+private final Scanner scanner = new Scanner(System.in);
+
 public static void main(String[] args) throws Exception {
-	//schaltet den ORMLite logger aus
 	Logger.setGlobalLogLevel(Level.OFF);
-	
 	new Main().start();
 }
 
 public void start() throws Exception {
-	
-	// ── Datenbankverbindung erstellen
 	ConnectionSource cs = new JdbcConnectionSource(DATABASE_URL);
 	
-	// Tabellen neu aufbauen (löscht alte Daten → kein UNIQUE-Konflikt)
-	TableUtils.dropTable(cs, Trikotnummer.class, true);
-	TableUtils.dropTable(cs, Spieler.class,      true);
-	TableUtils.dropTable(cs, Spiel.class,        true);
-	TableUtils.dropTable(cs, Mannschaft.class,   true);
-	TableUtils.dropTable(cs, Trainer.class,      true);
-	
-	TableUtils.createTable(cs, Trainer.class);
-	TableUtils.createTable(cs, Mannschaft.class);
-	TableUtils.createTable(cs, Spiel.class);
-	TableUtils.createTable(cs, Spieler.class);
-	TableUtils.createTable(cs, Trikotnummer.class);
+	TableUtils.createTableIfNotExists(cs, Trainer.class);
+	TableUtils.createTableIfNotExists(cs, Mannschaft.class);
+	TableUtils.createTableIfNotExists(cs, Spiel.class);
+	TableUtils.createTableIfNotExists(cs, Spieler.class);
+	TableUtils.createTableIfNotExists(cs, Trikotnummer.class);
 	
 	trainerDao      = DaoManager.createDao(cs, Trainer.class);
 	spielDao        = DaoManager.createDao(cs, Spiel.class);
@@ -53,174 +45,421 @@ public void start() throws Exception {
 	spielerDao      = DaoManager.createDao(cs, Spieler.class);
 	trikotnummerDao = DaoManager.createDao(cs, Trikotnummer.class);
 	
-	//Trainer erstellen
-	Trainer arteta = new Trainer("Mikel Arteta", "Spanisch");
-	trainerDao.create(arteta);
-	
-	
-	// Startelf und Ersatzbank erstellen
-	Mannschaft arsenalStartelf = new Mannschaft("Arsenal Startelf", 11, true, null, arteta);
-	Mannschaft arsenalErsatz   = new Mannschaft("Arsenal Ersatzbank", 7, true, null, arteta);
-	mannschaftDao.create(arsenalStartelf);
-	mannschaftDao.create(arsenalErsatz);
-	
-	Mannschaft chelsea = new Mannschaft("Chelsea FC",      11, false, null, null);
-	Mannschaft manCity = new Mannschaft("Manchester City", 11, false, null, null);
-	mannschaftDao.create(chelsea);
-	mannschaftDao.create(manCity);
-	
-	
-	// Spiele anmelden
-	Spiel spiel1 = new Spiel(LocalDate.of(2026, 5, 10), LocalTime.of(15, 30),
-			arsenalStartelf, chelsea);
-	Spiel spiel2 = new Spiel(LocalDate.of(2026, 5, 17), LocalTime.of(17, 0),
-			arsenalStartelf, manCity);
-	spielDao.create(spiel1);
-	spielDao.create(spiel2);
-	
-	System.out.println(" Spielplan ──────────────────────────────────");
-	System.out.println("  " + spiel1);
-	System.out.println("  " + spiel2);
-	
-	// alle Spieler anmelden
-	System.out.println("\n── Arsenal Kader (für beide Spiele) ───────────────");
-	meldeSpielerAn("David Raya",         LocalDate.of(1995, 9,  15), "Torwart",    1,  arsenalStartelf);
-	meldeSpielerAn("William Saliba",     LocalDate.of(2001, 3,  24), "Abwehr",     2,  arsenalStartelf);
-	meldeSpielerAn("Ben White",          LocalDate.of(1997, 10, 8),  "Abwehr",     4,  arsenalStartelf);
-	meldeSpielerAn("Gabriel Magalhaes",  LocalDate.of(1997, 12, 19), "Abwehr",     6,  arsenalStartelf);
-	meldeSpielerAn("Jurrien Timber",     LocalDate.of(2001, 6,  17), "Abwehr",     12, arsenalStartelf);
-	meldeSpielerAn("Declan Rice",        LocalDate.of(1999, 1,  14), "Mittelfeld", 41, arsenalStartelf);
-	meldeSpielerAn("Martin Zubimendi",   LocalDate.of(1999, 2,  2),  "Mittelfeld", 36, arsenalStartelf);
-	meldeSpielerAn("Martin Odegaard",    LocalDate.of(1998, 12, 17), "Mittelfeld", 8,  arsenalStartelf);
-	meldeSpielerAn("Bukayo Saka",        LocalDate.of(2001, 9,  5),  "Flügel",     7,  arsenalStartelf);
-	meldeSpielerAn("Viktor Gyokeres",    LocalDate.of(1998, 6,  4),  "Sturm",      14, arsenalStartelf);
-	meldeSpielerAn("Gabriel Martinelli", LocalDate.of(2001, 6,  18), "Flügel",     11, arsenalStartelf);
-	// Ersatzbank
-	meldeSpielerAn("Kepa Arrizabalaga",  LocalDate.of(1994, 10, 3),  "Torwart",    13, arsenalErsatz);
-	meldeSpielerAn("Cristhian Mosquera", LocalDate.of(2004, 4,  17), "Abwehr",     3,  arsenalErsatz);
-	meldeSpielerAn("Riccardo Calafiori", LocalDate.of(2002, 5,  19), "Abwehr",     33, arsenalErsatz);
-	meldeSpielerAn("Mikel Merino",       LocalDate.of(1996, 6,  22), "Mittelfeld", 23, arsenalErsatz);
-	meldeSpielerAn("Kai Havertz",        LocalDate.of(1999, 6,  11), "Mittelfeld", 29, arsenalErsatz);
-	meldeSpielerAn("Leandro Trossard",   LocalDate.of(1994, 12, 4),  "Flügel",     19, arsenalErsatz);
-	meldeSpielerAn("Ethan Nwaneri",      LocalDate.of(2007, 3,  21), "Flügel",     22, arsenalErsatz);
-	
-	System.out.println("\n── Überfüllungstest: 8. Ersatzspieler ──────────────");
-	meldeSpielerAn("Noni Madueke", LocalDate.of(2001, 12, 14), "Flügel", 20, arsenalErsatz);
-	
-	//  Ergebnisse eintragen
-	System.out.println("\n Ergebnisse eintragen ────────────────────────");
-	ergebnisEintragen(spiel1, 3, 1);
-	ergebnisEintragen(spiel2, 2, 2);
-	
-	//Spieler bearbeiten ───────────────────────────────────────
-	System.out.println("\n Spieler bearbeiten ──────────────────────────");
-	spielerBearbeiten("Kai Havertz", "Sturm");
-	
-	//Spieler löschen ──────────────────────────────────────────
-	System.out.println("\n Spieler löschen ─────────────────────────────");
-	spielerLoeschen("Cristhian Mosquera");
-	
-	// Kaderbericht ──────────────────────────────────────────────────
-	System.out.println("\n");
-	System.out.println("  FC ARSENAL – KADERBERICHT SAISON 2025/26"+"\n");
+	mainMenu();
+	cs.close();
+}
 
+// ═══════════════════════════════════════════════════════════════════════
+//  Menüs
+// ═══════════════════════════════════════════════════════════════════════
+
+private void mainMenu() throws Exception {
+	while (true) {
+		System.out.println("\n╔══════════════════════════════════╗");
+		System.out.println("║   FC ARSENAL – VERWALTUNG        ║");
+		System.out.println("╠══════════════════════════════════╣");
+		System.out.println("║  1  Spieler verwalten            ║");
+		System.out.println("║  2  Mannschaften verwalten       ║");
+		System.out.println("║  3  Spiele verwalten             ║");
+		System.out.println("║  4  Ligatabelle anzeigen         ║");
+		System.out.println("║  0  Beenden                      ║");
+		System.out.println("╚══════════════════════════════════╝");
+		System.out.print("  Auswahl: ");
+		
+		switch (readInt()) {
+			case 1 -> spielerMenu();
+			case 2 -> mannschaftMenu();
+			case 3 -> spieleMenu();
+			case 4 -> ligatabelle();
+			case 0 -> { System.out.println("Auf Wiedersehen!"); return; }
+			default -> System.out.println("  ! Ungültige Eingabe.");
+		}
+	}
+}
+
+// ── Spieler ──────────────────────────────────────────────────────────
+
+private void spielerMenu() throws Exception {
+	while (true) {
+		System.out.println("\n── Spieler ─────────────────────────");
+		System.out.println("  1  Alle Spieler anzeigen");
+		System.out.println("  2  Spieler anlegen");
+		System.out.println("  3  Spieler bearbeiten");
+		System.out.println("  4  Spieler löschen");
+		System.out.println("  0  Zurück");
+		System.out.print("  Auswahl: ");
+		
+		switch (readInt()) {
+			case 1 -> alleSpielerAnzeigen();
+			case 2 -> spielerAnlegen();
+			case 3 -> spielerBearbeiten();
+			case 4 -> spielerLoeschen();
+			case 0 -> { return; }
+			default -> System.out.println("  ! Ungültige Eingabe.");
+		}
+	}
+}
+
+private void alleSpielerAnzeigen() throws Exception {
+	List<Spieler> liste = spielerDao.queryForAll();
+	if (liste.isEmpty()) { System.out.println("  Keine Spieler vorhanden."); return; }
 	
-	for (Mannschaft m : mannschaftDao.queryForAll()) {
-		if (m.isHeimspiel()) {
-			kaderAusgeben(m);
+	System.out.println("\n  #    Name                       Position      Geburtsdatum  Mannschaft");
+	System.out.println("  ─────────────────────────────────────────────────────────────────────────");
+	for (Spieler sp : liste) {
+		List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(Trikotnummer.FIELD_SPIELER, sp.getId());
+		String nr  = nrListe.isEmpty() ? " –" : String.format("%2d", nrListe.get(0).getNummer());
+		String geb = sp.getGeburtsdatum() != null ? sp.getGeburtsdatum().toString() : "–";
+		String mann = sp.getMannschaft() != null ? sp.getMannschaft().getName() : "–";
+		System.out.printf("  #%-3s %-27s %-13s %-13s %s%n",
+				nr, sp.getName(), sp.getPosition(), geb, mann);
+	}
+}
+
+private void spielerAnlegen() throws Exception {
+	System.out.println("\n── Spieler anlegen ─────────────────");
+	
+	System.out.print("  Name: ");
+	String name = scanner.nextLine().trim();
+	if (name.isEmpty()) { System.out.println("  ! Name darf nicht leer sein."); return; }
+	
+	System.out.print("  Geburtsdatum (YYYY-MM-DD, leer lassen = überspringen): ");
+	String gebStr = scanner.nextLine().trim();
+	LocalDate geb = null;
+	if (!gebStr.isEmpty()) {
+		try { geb = LocalDate.parse(gebStr); }
+		catch (Exception e) { System.out.println("  ! Ungültiges Datum, wird übersprungen."); }
+	}
+	
+	System.out.println("  Position:");
+	System.out.println("    1 Torwart  2 Abwehr  3 Mittelfeld  4 Sturm  5 Flügel");
+	System.out.print("  Auswahl: ");
+	String position = switch (readInt()) {
+		case 1 -> "Torwart";
+		case 2 -> "Abwehr";
+		case 3 -> "Mittelfeld";
+		case 4 -> "Sturm";
+		case 5 -> "Flügel";
+		default -> null;
+	};
+	if (position == null) { System.out.println("  ! Ungültige Position."); return; }
+	
+	System.out.print("  Trikotnummer: ");
+	int nr = readInt();
+	if (!trikotnummerDao.queryForEq(Trikotnummer.FIELD_NUMMER, nr).isEmpty()) {
+		System.out.println("  ! Trikotnummer " + nr + " ist bereits vergeben.");
+		return;
+	}
+	
+	Mannschaft mannschaft = mannschaftAuswaehlen();
+	if (mannschaft == null) return;
+	
+	Mannschaft frisch = mannschaftDao.queryForId(mannschaft.getId());
+	if (frisch.istVoll()) {
+		System.out.printf("  ! %s ist voll (%d/%d).%n",
+				frisch.getName(), frisch.getKaderlimit(), frisch.getKaderlimit());
+		return;
+	}
+	
+	Spieler sp = new Spieler(name, geb, position, frisch);
+	spielerDao.create(sp);
+	trikotnummerDao.create(new Trikotnummer(nr, sp));
+	System.out.printf("  + #%d %s (%s) wurde angelegt.%n", nr, name, position);
+}
+
+private void spielerBearbeiten() throws Exception {
+	System.out.println("\n── Spieler bearbeiten ──────────────");
+	alleSpielerAnzeigen();
+	
+	System.out.print("\n  Name des Spielers: ");
+	String name = scanner.nextLine().trim();
+	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
+	if (gefunden.isEmpty()) { System.out.println("  ! Spieler nicht gefunden."); return; }
+	
+	Spieler sp = gefunden.get(0);
+	System.out.println("  Was bearbeiten?");
+	System.out.println("    1 Position  2 Mannschaft  3 Geburtsdatum");
+	System.out.print("  Auswahl: ");
+	
+	switch (readInt()) {
+		case 1 -> {
+			System.out.println("  Neue Position:");
+			System.out.println("    1 Torwart  2 Abwehr  3 Mittelfeld  4 Sturm  5 Flügel");
+			System.out.print("  Auswahl: ");
+			String pos = switch (readInt()) {
+				case 1 -> "Torwart";
+				case 2 -> "Abwehr";
+				case 3 -> "Mittelfeld";
+				case 4 -> "Sturm";
+				case 5 -> "Flügel";
+				default -> null;
+			};
+			if (pos == null) { System.out.println("  ! Ungültig."); return; }
+			String alt = sp.getPosition();
+			sp.setPosition(pos);
+			spielerDao.update(sp);
+			System.out.printf("  ~ Position: %s → %s%n", alt, pos);
+		}
+		case 2 -> {
+			Mannschaft neu = mannschaftAuswaehlen();
+			if (neu == null) return;
+			sp.setMannschaft(neu);
+			spielerDao.update(sp);
+			System.out.println("  ~ Mannschaft aktualisiert.");
+		}
+		case 3 -> {
+			System.out.print("  Neues Geburtsdatum (YYYY-MM-DD): ");
+			String s = scanner.nextLine().trim();
+			try {
+				sp.setGeburtsdatum(LocalDate.parse(s));
+				spielerDao.update(sp);
+				System.out.println("  ~ Geburtsdatum aktualisiert.");
+			} catch (Exception e) { System.out.println("  ! Ungültiges Datum."); }
+		}
+		default -> System.out.println("  ! Ungültig.");
+	}
+}
+
+private void spielerLoeschen() throws Exception {
+	System.out.println("\n── Spieler löschen ─────────────────");
+	alleSpielerAnzeigen();
+	
+	System.out.print("\n  Name des Spielers: ");
+	String name = scanner.nextLine().trim();
+	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
+	if (gefunden.isEmpty()) { System.out.println("  ! Spieler nicht gefunden."); return; }
+	
+	Spieler sp = gefunden.get(0);
+	System.out.print("  Wirklich löschen? (j/n): ");
+	if (!scanner.nextLine().trim().equalsIgnoreCase("j")) { System.out.println("  Abgebrochen."); return; }
+	
+	List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(Trikotnummer.FIELD_SPIELER, sp.getId());
+	for (Trikotnummer tn : nrListe) trikotnummerDao.delete(tn);
+	spielerDao.delete(sp);
+	System.out.printf("  - %s wurde gelöscht.%n", name);
+}
+
+// ── Mannschaften ─────────────────────────────────────────────────────
+
+private void mannschaftMenu() throws Exception {
+	while (true) {
+		System.out.println("\n── Mannschaften ────────────────────");
+		System.out.println("  1  Alle Mannschaften anzeigen");
+		System.out.println("  2  Mannschaft anlegen");
+		System.out.println("  3  Kader einer Mannschaft anzeigen");
+		System.out.println("  0  Zurück");
+		System.out.print("  Auswahl: ");
+		
+		switch (readInt()) {
+			case 1 -> alleMannschaftenAnzeigen();
+			case 2 -> mannschaftAnlegen();
+			case 3 -> kaderAnzeigen();
+			case 0 -> { return; }
+			default -> System.out.println("  ! Ungültige Eingabe.");
+		}
+	}
+}
+
+private void alleMannschaftenAnzeigen() throws Exception {
+	List<Mannschaft> liste = mannschaftDao.queryForAll();
+	if (liste.isEmpty()) { System.out.println("  Keine Mannschaften vorhanden."); return; }
+	
+	System.out.println("\n  Name                            Limit  Belegt  Typ    Trainer");
+	System.out.println("  ──────────────────────────────────────────────────────────────────");
+	for (Mannschaft m : liste) {
+		int belegt = spielerDao.queryForEq(Spieler.FIELD_MANNSCHAFT, m.getId()).size();
+		System.out.printf("  %-32s %5d  %6d  %-6s %s%n",
+				m.getName(), m.getKaderlimit(), belegt,
+				m.isHeimspiel() ? "Heim" : "Gast",
+				m.getTrainer() != null ? m.getTrainer().getName() : "–");
+	}
+}
+
+private void mannschaftAnlegen() throws Exception {
+	System.out.println("\n── Mannschaft anlegen ──────────────");
+	
+	System.out.print("  Name: ");
+	String name = scanner.nextLine().trim();
+	if (name.isEmpty()) { System.out.println("  ! Name darf nicht leer sein."); return; }
+	if (!mannschaftDao.queryForEq(Mannschaft.FIELD_NAME, name).isEmpty()) {
+		System.out.println("  ! Eine Mannschaft mit diesem Namen existiert bereits.");
+		return;
+	}
+	
+	System.out.print("  Kaderlimit: ");
+	int limit = readInt();
+	
+	System.out.print("  Heimmannschaft? (j/n): ");
+	boolean heim = scanner.nextLine().trim().equalsIgnoreCase("j");
+	
+	System.out.print("  Trainername (leer = kein Trainer): ");
+	String trainerName = scanner.nextLine().trim();
+	Trainer trainer = null;
+	if (!trainerName.isEmpty()) {
+		List<Trainer> vorhandene = trainerDao.queryForEq(Trainer.FIELD_NAME, trainerName);
+		if (!vorhandene.isEmpty()) {
+			trainer = vorhandene.get(0);
+		} else {
+			System.out.print("  Trainer nicht gefunden. Nationalität: ");
+			String nat = scanner.nextLine().trim();
+			trainer = new Trainer(trainerName, nat.isEmpty() ? "unbekannt" : nat);
+			trainerDao.create(trainer);
 		}
 	}
 	
-	// Ligatabelle erstellen
+	Mannschaft m = new Mannschaft(name, limit, heim, null, trainer);
+	mannschaftDao.create(m);
+	System.out.printf("  + Mannschaft \"%s\" angelegt.%n", name);
+}
+
+private void kaderAnzeigen() throws Exception {
+	alleMannschaftenAnzeigen();
+	System.out.print("\n  Mannschaftsname: ");
+	String name = scanner.nextLine().trim();
+	List<Mannschaft> gefunden = mannschaftDao.queryForEq(Mannschaft.FIELD_NAME, name);
+	if (gefunden.isEmpty()) { System.out.println("  ! Mannschaft nicht gefunden."); return; }
+	
+	Mannschaft m = mannschaftDao.queryForId(gefunden.get(0).getId());
+	List<Spieler> spielerListe = spielerDao.queryForEq(Spieler.FIELD_MANNSCHAFT, m.getId());
+	int belegt = spielerListe.size();
+	
+	System.out.printf("%n  [%s] %s | Trainer: %s | %d/%d Spieler%n",
+			m.isHeimspiel() ? "Heim" : "Gast", m.getName(),
+			m.getTrainer() != null ? m.getTrainer().getName() : "–",
+			belegt, m.getKaderlimit());
+	System.out.println("  ─────────────────────────────────────────────────");
+	
+	for (Spieler sp : spielerListe) {
+		List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(Trikotnummer.FIELD_SPIELER, sp.getId());
+		String nr  = nrListe.isEmpty() ? " –" : String.format("%2d", nrListe.get(0).getNummer());
+		String geb = sp.getGeburtsdatum() != null ? sp.getGeburtsdatum().toString() : "–";
+		System.out.printf("  #%-3s %-25s %-13s *%s%n", nr, sp.getName(), sp.getPosition(), geb);
+	}
+}
+
+// ── Spiele ───────────────────────────────────────────────────────────
+
+private void spieleMenu() throws Exception {
+	while (true) {
+		System.out.println("\n── Spiele ──────────────────────────");
+		System.out.println("  1  Alle Spiele anzeigen");
+		System.out.println("  2  Spiel anlegen");
+		System.out.println("  3  Ergebnis eintragen");
+		System.out.println("  0  Zurück");
+		System.out.print("  Auswahl: ");
+		
+		switch (readInt()) {
+			case 1 -> alleSpieleanzeigen();
+			case 2 -> spielAnlegen();
+			case 3 -> ergebnisEintragen();
+			case 0 -> { return; }
+			default -> System.out.println("  ! Ungültige Eingabe.");
+		}
+	}
+}
+
+private void alleSpieleanzeigen() throws Exception {
+	List<Spiel> liste = spielDao.queryForAll();
+	if (liste.isEmpty()) { System.out.println("  Keine Spiele vorhanden."); return; }
+	
+	System.out.println("\n  ID  Datum        Uhrzeit  Heim                           Gast                    Ergebnis");
+	System.out.println("  ─────────────────────────────────────────────────────────────────────────────────────────");
+	for (Spiel s : liste) {
+		String heim = s.getHeimmannschaft() != null ? s.getHeimmannschaft().getName() : "–";
+		String gast = s.getGastmannschaft() != null ? s.getGastmannschaft().getName() : "–";
+		String ergebnis = s.isGespielt() ? s.getToreHeim() + ":" + s.getToreGast() : "–:–";
+		String zeit = s.getUhrzeit() != null ? s.getUhrzeit().toString() : "–";
+		System.out.printf("  %-3d %-12s %-8s %-30s %-23s %s%n",
+				s.getId(), s.getDatum(), zeit, heim, gast, ergebnis);
+	}
+}
+
+private void spielAnlegen() throws Exception {
+	System.out.println("\n── Spiel anlegen ───────────────────");
+	
+	System.out.print("  Datum (YYYY-MM-DD): ");
+	LocalDate datum;
+	try { datum = LocalDate.parse(scanner.nextLine().trim()); }
+	catch (Exception e) { System.out.println("  ! Ungültiges Datum."); return; }
+	
+	System.out.print("  Uhrzeit (HH:MM, leer = keine): ");
+	String zeitStr = scanner.nextLine().trim();
+	LocalTime uhrzeit = null;
+	if (!zeitStr.isEmpty()) {
+		try { uhrzeit = LocalTime.parse(zeitStr); }
+		catch (Exception e) { System.out.println("  ! Ungültige Uhrzeit, wird übersprungen."); }
+	}
+	
+	System.out.println("  Heimmannschaft auswählen:");
+	Mannschaft heim = mannschaftAuswaehlen();
+	if (heim == null) return;
+	
+	System.out.println("  Gastmannschaft auswählen:");
+	Mannschaft gast = mannschaftAuswaehlen();
+	if (gast == null) return;
+	
+	if (heim.getId() == gast.getId()) {
+		System.out.println("  ! Heim- und Gastmannschaft müssen verschieden sein.");
+		return;
+	}
+	
+	Spiel spiel = new Spiel(datum, uhrzeit, heim, gast);
+	spielDao.create(spiel);
+	System.out.printf("  + Spiel %s vs. %s am %s angelegt.%n",
+			heim.getName(), gast.getName(), datum);
+}
+
+private void ergebnisEintragen() throws Exception {
+	alleSpieleanzeigen();
+	System.out.print("\n  Spiel-ID: ");
+	int id = readInt();
+	Spiel spiel = spielDao.queryForId(id);
+	if (spiel == null) { System.out.println("  ! Spiel nicht gefunden."); return; }
+	if (spiel.isGespielt()) { System.out.println("  ! Ergebnis wurde bereits eingetragen."); return; }
+	
+	System.out.print("  Tore Heim: ");
+	int tH = readInt();
+	System.out.print("  Tore Gast: ");
+	int tG = readInt();
+	
+	spiel.ergebnisEintragen(tH, tG);
+	spielDao.update(spiel);
+	System.out.printf("  + Ergebnis gespeichert: %s%n", spiel);
+}
+
+// ── Ligatabelle ──────────────────────────────────────────────────────
+
+private void ligatabelle() throws Exception {
 	Ligatabelle tabelle = new Ligatabelle();
 	for (Spiel s : spielDao.queryForAll()) {
 		tabelle.spielErfassen(s);
 	}
 	tabelle.ausgeben();
-	
-	cs.close();
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+//  Hilfsmethoden
+// ═══════════════════════════════════════════════════════════════════════
 
-private void meldeSpielerAn(String name, LocalDate geburtsdatum,
-                            String position, int trikotnr, Mannschaft mannschaft)
-		throws Exception {
+private Mannschaft mannschaftAuswaehlen() throws Exception {
+	List<Mannschaft> alle = mannschaftDao.queryForAll();
+	if (alle.isEmpty()) { System.out.println("  ! Keine Mannschaften vorhanden."); return null; }
 	
-	Mannschaft frisch = mannschaftDao.queryForId(mannschaft.getId());
-	
-	if (frisch.istVoll()) {
-		System.out.printf("  X %-25s -> %s ist voll (%d/%d)%n",
-				name, frisch.getName(), frisch.getKaderlimit(), frisch.getKaderlimit());
-		return;
+	for (int i = 0; i < alle.size(); i++) {
+		System.out.printf("    %2d  %s%n", i + 1, alle.get(i).getName());
 	}
-	
-	Spieler sp = new Spieler(name, geburtsdatum, position, frisch);
-	spielerDao.create(sp);
-	
-	List<Trikotnummer> vorhandene = trikotnummerDao.queryForEq(
-			Trikotnummer.FIELD_NUMMER, trikotnr);
-	if (vorhandene.isEmpty()) {
-		trikotnummerDao.create(new Trikotnummer(trikotnr, sp));
-	}
-	
-	System.out.printf("  + #%-3d %-25s (%s) -> %s%n",
-			trikotnr, name, geburtsdatum, frisch.getName());
+	System.out.print("  Auswahl (Nummer): ");
+	int idx = readInt() - 1;
+	if (idx < 0 || idx >= alle.size()) { System.out.println("  ! Ungültige Auswahl."); return null; }
+	return alle.get(idx);
 }
 
-private void spielerBearbeiten(String name, String neuePosition) throws Exception {
-	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
-	if (gefunden.isEmpty()) {
-		System.out.println("  ! Spieler nicht gefunden: " + name);
-		return;
-	}
-	Spieler sp = gefunden.get(0);
-	String alt = sp.getPosition();
-	sp.setPosition(neuePosition);
-	spielerDao.update(sp);
-	System.out.printf("  ~ %-25s: Position %s → %s%n", name, alt, neuePosition);
-}
-
-private void spielerLoeschen(String name) throws Exception {
-	List<Spieler> gefunden = spielerDao.queryForEq(Spieler.FIELD_NAME, name);
-	if (gefunden.isEmpty()) {
-		System.out.println("  ! Spieler nicht gefunden: " + name);
-		return;
-	}
-	Spieler sp = gefunden.get(0);
-	List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(
-			Trikotnummer.FIELD_SPIELER, sp.getId());
-	for (Trikotnummer tn : nrListe) trikotnummerDao.delete(tn);
-	spielerDao.delete(sp);
-	System.out.printf("  - %-25s gelöscht%n", name);
-}
-
-private void ergebnisEintragen(Spiel spiel, int toreHeim, int toreGast) throws Exception {
-	spiel.ergebnisEintragen(toreHeim, toreGast);
-	spielDao.update(spiel);
-	System.out.printf("  Ergebnis gespeichert: %s%n", spiel);
-}
-
-private void kaderAusgeben(Mannschaft m) throws Exception {
-	Mannschaft frisch = mannschaftDao.queryForId(m.getId());
-	int belegt = frisch.getKaderlimit() - frisch.freieKaderplaetze();
-	
-	System.out.printf("%n  [%s] %s%n    Trainer: %s | %d/%d Spieler%n",
-			frisch.isHeimspiel() ? "Heim" : "Gast",
-			frisch.getName(),
-			frisch.getTrainer() != null ? frisch.getTrainer().getName() : "–",
-			belegt, frisch.getKaderlimit());
-	System.out.println("    ─────────────────────────────────────────────────");
-	
-	List<Spieler> spielerListe = spielerDao.queryForEq(
-			Spieler.FIELD_MANNSCHAFT, frisch.getId());
-	
-	for (Spieler sp : spielerListe) {
-		List<Trikotnummer> nrListe = trikotnummerDao.queryForEq(
-				Trikotnummer.FIELD_SPIELER, sp.getId());
-		String nr  = nrListe.isEmpty() ? " –" : String.format("%2d", nrListe.get(0).getNummer());
-		String geb = sp.getGeburtsdatum() != null ? sp.getGeburtsdatum().toString() : "–";
-		System.out.printf("    #%-3s %-25s  %-12s  *%s%n",
-				nr, sp.getName(), sp.getPosition(), geb);
+private int readInt() {
+	try {
+		int val = Integer.parseInt(scanner.nextLine().trim());
+		return val;
+	} catch (NumberFormatException e) {
+		return -1;
 	}
 }
 }
